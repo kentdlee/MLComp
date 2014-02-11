@@ -1,0 +1,2 @@
+#!/bin/bash 
+swipl -f types.pro -g runNonInteractive --quiet

@@ -1,0 +1,5 @@
+let fun f g = g(10)
+    fun s x = x * 77
+in
+  println (f s) 
+end

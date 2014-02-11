@@ -1,0 +1,15 @@
+(* And here is a program that the typechecker
+   does not typecheck correctly. This is a 
+   hard one. It relies on imperative types (i.e.
+   types that can be updated as a program progresses.), 
+   which the typechecker does not currently support 
+   but the ML type checker does not support it either.
+
+*)
+
+let val r = ref(fn x => x)
+in
+    r := (fn x => x+1);
+    r := (fn x => 0);
+    println(!r true)
+end

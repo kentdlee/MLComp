@@ -1,0 +1,23 @@
+#!/bin/bash
+set -f
+export file="$1"
+if [ -z $file ]; then
+  echo -n "Enter a file name: "
+  read file
+fi
+if [ -e $file ]; then
+  rm a.casm >& /dev/null
+  rm a.term >& /dev/null
+  echo *************** Source File ****************
+  cat $file
+  sml @SMLload=mlcompimage $file
+  echo ******************* AST ********************
+  cat a.term
+#  echo ************* Type Checking ****************
+#swipl -f types.pro -g runNonInteractive --quiet
+  echo ********* Target Program Execution *********
+  coco a.casm
+else
+  echo FILE DOES NOT EXIST
+fi
+

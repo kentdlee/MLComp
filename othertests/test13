@@ -1,0 +1,10 @@
+(* This test is supposed to fail in the typechecker
+   because the expression and the exception handler
+   must have the same return type and do not in this
+   program.
+*)
+
+((fn x => (raise (Exception "help"); x+1)) 6) 
+handle e => 
+  (println e;
+   println (type e))

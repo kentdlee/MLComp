@@ -1,0 +1,4 @@
+(* This test will fail typechecking because cprint is a 
+   recursive type *)
+
+cprint "hello world!" " how are you\n"

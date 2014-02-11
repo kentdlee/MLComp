@@ -1,0 +1,231 @@
+(* mlcomp.grm - parser spec 
+   The grammar specification provided here comes in part from the description provided
+   by Andreas Rossberg at http://www.mpi-sws.org/~rossberg/sml.html. The grammar 
+   provided below is not exactly the same since a subset of Standard ML is supported
+   by this compiler.
+*)
+
+open MLAS;
+
+val idnum = ref 0
+
+fun nextIdNum() = 
+  let val x = !idnum
+  in
+    idnum := !idnum + 1;
+    x
+  end
+
+exception emptyDecList;
+exception argumentMismatch;
+
+fun uncurryIt nil = raise emptyDecList
+  | uncurryIt (L as ((name,patList,exp)::t)) = 
+    let fun len nil = raise argumentMismatch
+          | len [(n,p,e)] = length(p)
+          | len ((n,p,e)::t) = 
+            let val size = length(p)
+            in
+              if size = len t then size else 
+                (TextIO.output(TextIO.stdOut,"Syntax Error: Number of arguments does not match in function "^name^"\n");
+                 raise argumentMismatch)
+            end
+        
+        val tupleList = List.map (fn x => "v"^Int.toString(nextIdNum())) patList
+     in
+       len(L); (* just check the paramter list sizes so all patterns have same length *)
+       (name,[match(idpat(hd(tupleList)),
+                 List.foldr (fn (x,y) => func(nextIdNum(),[match(idpat(x), y)])) 
+                    (apply (func(nextIdNum(),List.map (fn (n,p,e) => match(tuplepat(p),e)) L),tuplecon(List.map (fn x => id(x)) tupleList))) (tl tupleList))])
+      
+(*     This version worked before adding support for mutually recursive functions. It converts a curried function to a val rec declaration.  
+       bindvalrec(idpat(name),List.foldr (fn (x,y) => func(nextIdNum(),[match(idpat(x), y)])) 
+                    (apply (func(nextIdNum(),List.map (fn (n,p,e) => match(tuplepat(p),e)) L),tuplecon(List.map (fn x => id(x)) tupleList))) tupleList)
+*) 
+     end
+
+fun makeMatchList (nil) = raise emptyDecList
+  | makeMatchList (L as (name,pat,exp)::t) =
+    (name, List.map (fn (n,p,e) => 
+               (if name <> n then (
+                   TextIO.output(TextIO.stdOut,"Syntax Error: Function definition with different names "^name^" and "^n^" not allowed.\n");
+                   raise argumentMismatch)
+                else match(p,e))) L)
+
+
+      
+%%
+%name mlcomp (* mlcomp becomes a prefix in functions *)
+%verbose
+%eop EOF
+%pos int
+%nodefault
+%pure (* no side-effects in actions *)
+
+%term EOF
+    | LParen
+    | RParen
+    | Plus
+    | Minus
+    | Times
+    | Div
+    | Mod
+    | Greater
+    | Less
+    | GreaterEqual
+    | LessEqual
+    | NotEqual
+    | Append
+    | ListCons
+    | Negate
+    | Comma
+    | Semicolon
+    | Underscore
+    | Arrow
+    | Equals
+    | VerticalBar
+    | LBracket
+    | RBracket
+    | Fun
+    | As
+    | Let
+    | Val
+    | In
+    | End
+    | If
+    | Then
+    | Else
+    | Fn
+    | While
+    | Do
+    | Handle
+    | Raise
+    | And
+    | Rec
+    | String of string
+    | Char of string
+    | Num of string
+    | True
+    | False
+    | Id of string
+    | SetEqual
+    | Exclaim
+
+
+
+%nonterm Prog of exp
+       | Exp of exp
+       | Expressions of exp list
+       | ExpSequence of exp list
+       | MatchExp of match list
+       | Pat of pat
+       | Patterns of pat list
+       | PatternSeq of pat list
+       | Dec of dec
+       | ValBind of dec
+       | FunBind of (string * match list) list
+       | FunMatch of (string * pat * exp) list
+       | Con of exp
+       | FuncExp of exp
+       | DecSeq of dec list
+       | CurriedFun of (string * pat list * exp) list
+
+%right SetEqual
+%left Plus Minus Append Equals NotEqual
+%left Times Div Mod Greater Less GreaterEqual LessEqual 
+%right ListCons
+%right Exclaim
+
+%%
+
+Prog : Exp EOF                                             (Exp)                  
+
+Exp : Con                                                  (Con)
+    | Id                                                   (id(Id))
+    | FuncExp Exp                                          (apply(FuncExp,Exp))
+    | Exclaim Exp                                          (apply(id("!"),Exp))
+    | Id SetEqual FuncExp                                  (infixexp(":=",id(Id),FuncExp))
+    | Exp Plus Exp                                         (infixexp("+",Exp1,Exp2))
+    | Exp Minus Exp                                        (infixexp("-",Exp1,Exp2))
+    | Exp Times Exp                                        (infixexp("*",Exp1,Exp2))
+    | Exp Div Exp                                          (infixexp("div",Exp1,Exp2))
+    | Exp Mod Exp                                          (infixexp("mod",Exp1,Exp2))
+    | Exp Greater Exp                                      (infixexp(">",Exp1,Exp2))
+    | Exp GreaterEqual Exp                                 (infixexp(">=",Exp1,Exp2))
+    | Exp Less Exp                                         (infixexp("<",Exp1,Exp2))
+    | Exp LessEqual Exp                                    (infixexp("<=",Exp1,Exp2))
+    | Exp Equals Exp                                       (infixexp("=",Exp1,Exp2))
+    | Exp NotEqual Exp                                     (infixexp("<>",Exp1,Exp2))
+    | Exp Append Exp                                       (infixexp("@",Exp1,Exp2))
+    | Exp ListCons Exp                                     (infixexp("::",Exp1,Exp2))
+    | LParen Exp RParen                                    (Exp)
+    | LParen Expressions RParen                            (tuplecon(Expressions))
+    | LParen ExpSequence RParen                            (expsequence(ExpSequence))
+    | LBracket Expressions RBracket                        (listcon(Expressions))
+    | LBracket RBracket                                    (id("nil"))
+    | Let DecSeq In ExpSequence End                        
+                (List.hd (List.foldr (fn (x,y) => [letdec(x,y)]) ExpSequence DecSeq))
+    | Raise Exp                                            (raisexp(Exp))
+    | Exp Handle MatchExp                                  (handlexp(Exp,MatchExp))
+    | If Exp Then Exp Else Exp                             (ifthen(Exp1,Exp2,Exp3))
+    | While Exp Do Exp                                     (whiledo(Exp1,Exp2))
+
+    | Fn MatchExp                                          (func(nextIdNum(),MatchExp))
+
+FuncExp : Exp                                              (Exp)
+
+Expressions : Exp                                          ([Exp])
+            | Exp Comma Expressions                        (Exp::Expressions)
+
+ExpSequence : Exp                                          ([Exp])
+            | Exp Semicolon ExpSequence                    (Exp::ExpSequence)
+
+MatchExp : Pat Arrow Exp                                   ([match(Pat,Exp)])
+         | Pat Arrow Exp VerticalBar MatchExp              (match(Pat,Exp)::MatchExp)
+
+Pat : Num                                                  (numpat(Num))
+    | Char                                                 (chpat(Char))
+    | String                                               (strpat(String))
+    | True                                                 (boolpat("true"))
+    | False                                                (boolpat("false"))
+    | Underscore                                           (wildcardpat)
+    | Id                                                   (idpat(Id))
+    | Pat ListCons Pat                                     (infixpat("::",Pat1,Pat2))
+    | LParen Pat RParen                                    (Pat)
+    | LParen Patterns RParen                               (tuplepat(Patterns))
+    | LBracket Patterns RBracket                           (listpat(Patterns))
+    | LBracket RBracket                                    (idpat("nil"))
+    | Id As Pat                                            (aspat(Id,Pat))
+
+Patterns : Pat                                             ([Pat])
+         | Pat Comma Patterns                              (Pat::Patterns)
+
+PatternSeq : Pat                                           ([Pat])
+           | Pat PatternSeq                                (Pat::PatternSeq)
+
+Dec : Val ValBind                                          (ValBind)
+    | Fun FunBind                                          (funmatches(FunBind))
+
+DecSeq : Dec                                               ([Dec])
+       | Dec DecSeq                                        (Dec::DecSeq)
+
+ValBind : Pat Equals Exp                                   (bindval(Pat,Exp))
+        | Rec Id Equals Exp                                (bindvalrec(idpat(Id),Exp))
+
+FunBind : FunMatch                                         ([makeMatchList FunMatch])
+        | CurriedFun                                       ([uncurryIt CurriedFun])
+        | FunBind And FunBind                              (FunBind1@FunBind2)
+
+FunMatch : Id Pat Equals Exp                               ([(Id,Pat,Exp)])
+         | Id Pat Equals Exp VerticalBar FunMatch          ((Id,Pat,Exp)::FunMatch)
+
+CurriedFun : 
+           Id PatternSeq Equals Exp                        ([(Id,PatternSeq,Exp)])
+         | Id PatternSeq Equals Exp VerticalBar CurriedFun ((Id,PatternSeq,Exp)::CurriedFun)
+
+Con : Num                                                  (num(Num))
+    | Char                                                 (ch(Char))
+    | String                                               (str(String))
+    | True                                                 (boolval("true"))
+    | False                                                (boolval("false"))
+    | LParen RParen                                        (tuplecon([]))

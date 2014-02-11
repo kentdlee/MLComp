@@ -1,0 +1,5 @@
+let val x = 10
+    val y = 0
+in
+  println (x div y)
+end

@@ -1,0 +1,5 @@
+let val x = input("Please enter a string:")
+in
+  print(x);
+  print("\n")
+end

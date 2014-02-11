@@ -1,0 +1,5 @@
+exception Exception of string;
+
+((fn x => (raise (Exception "help"); x+1)) 6) 
+handle Exception e => (TextIO.output(TextIO.stdOut, e))
+

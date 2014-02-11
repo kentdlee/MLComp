@@ -1,0 +1,4 @@
+let fun f x y = x - y
+in
+  println (f 5 4)
+end

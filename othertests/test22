@@ -1,0 +1,9 @@
+let fun f x = 
+    let fun g y = x + y
+    in
+      g
+    end
+in
+  println (f 5 4) 
+end
+

@@ -1,0 +1,11 @@
+#!/bin/bash
+sml << EOF
+
+CM.make "sources.cm";
+
+SMLofNJ.exportFn("mlcompimage",mlcomp.run);
+
+EOF
+
+
+
