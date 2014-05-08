@@ -13,8 +13,8 @@ if [ -e $file ]; then
   sml @SMLload=mlcompimage $file
   echo ******************* AST ********************
   cat a.term
-#  echo ************* Type Checking ****************
-#swipl -f types.pro -g runNonInteractive --quiet
+  #echo ************* Type Checking ****************
+  #swipl -f types.pro -g runNonInteractive --quiet
   echo ********* Target Program Execution *********
   coco a.casm
 else

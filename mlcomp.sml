@@ -158,7 +158,7 @@ open MLAS;
 
                | con(str(s)) = [s]
                | con(other) = 
-                  (TextIO.output(TextIO.stdOut, "Attempt to get constants for expression not currently supported!\n");
+                  (TextIO.output(TextIO.stdOut, "\nAttempt to get constants for expression not currently supported!\n");
                    TextIO.output(TextIO.stdOut, "Expression was: " ^ nameOf(other) ^ "\n");
                    raise Unimplemented) 
          in
@@ -190,7 +190,7 @@ open MLAS;
        | patBindings(infixpat("::",pat1,pat2),scope) = (patBindings(pat1,scope)) @ (patBindings(pat2,scope))
        | patBindings(tuplepat(L),scope) = List.foldr (fn (x,y) => patBindings(x,scope)@y) [] L
        | patBindings(_,scope) = 
-         (TextIO.output(TextIO.stdOut, "Attempt to gather locals for unsupported pattern!\n");
+         (TextIO.output(TextIO.stdOut, "\nAttempt to gather locals for unsupported pattern!\n");
           raise Unimplemented) 
 
      and localBindings(ast,pats,globalBindings,scope) = 
@@ -247,7 +247,7 @@ open MLAS;
                  end 
 
                | bindingsOf(other,bindings,scope) = 
-                  (TextIO.output(TextIO.stdOut, "Attempt to call localBindings for expression not currently supported!\n");
+                  (TextIO.output(TextIO.stdOut, "\nAttempt to call localBindings for expression not currently supported!\n");
                    TextIO.output(TextIO.stdOut, "Expression was: " ^ nameOf(other) ^ "\n");
                    raise Unimplemented) 
 
@@ -602,7 +602,7 @@ open MLAS;
          end
          
        | codegen(other,outFile,indent,consts,locals,freeVars,cellVars,globals,env,globalBindings,scope) =
-         (TextIO.output(TextIO.stdOut, "Attempt to compile expression not currently supported!\n");
+         (TextIO.output(TextIO.stdOut, "\nAttempt to compile expression not currently supported!\n");
           TextIO.output(TextIO.stdOut, "Expression was: " ^ nameOf(other) ^ "\n");
           raise Unimplemented) 
 
@@ -754,7 +754,7 @@ open MLAS;
           List.foldl (fn (x,y) => patmatch(x,outFile,indent,consts,locals,freeVars,cellVars,globals,env,scope,label) @ y) [] L)
 
        | patmatch(_,outFile,indent,consts,locals,freeVars,cellVars,globals,env,scope,label) =
-         (TextIO.output(TextIO.stdOut, "Attempt to compile unsupported pattern match!\n");
+         (TextIO.output(TextIO.stdOut, "\nAttempt to compile unsupported pattern match!\n");
           raise Unimplemented)   
 
      (* The nestedfuns function is necessary because the CoCo assembly language insists that nested functions (whether anonymous
@@ -843,7 +843,7 @@ open MLAS;
                    nestedfun(name,L,outFile,indent,globals,env,globalBindings,scope) 
                  end
                | functions(other) =
-                  (TextIO.output(TextIO.stdOut, "Attempt to call nestedfuns functions function for expression not currently supported!\n");
+                  (TextIO.output(TextIO.stdOut, "\nAttempt to call nestedfuns functions function for expression not currently supported!\n");
                    TextIO.output(TextIO.stdOut, "Expression was: " ^ nameOf(other) ^ "\n");
                    raise Unimplemented)   
  
@@ -942,7 +942,7 @@ open MLAS;
                  end
                | functions(func(idnum,L)) = ()
                | functions(other) = 
-                  (TextIO.output(TextIO.stdOut, "Attempt to call makeFunctions functions function for expression not currently supported!\n");
+                  (TextIO.output(TextIO.stdOut, "\nAttempt to call makeFunctions functions function for expression not currently supported!\n");
                    TextIO.output(TextIO.stdOut, "Expression was: " ^ nameOf(other) ^ "\n");
                    raise Unimplemented)   
         

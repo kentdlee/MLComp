@@ -1,8 +1,5 @@
 readAST(AST) :- open('a.term',read,Stream), read(Stream,AST).
 
-writeMsg([]).
-writeMsg([H|T]) :- write(H), writeMsg(T).
-
 printMatchList(Indent,[M]) :- printMatch(Indent,M).
 printMatchList(Indent,[M|T]) :- printMatch(Indent,M), printMatchList(Indent,T).
 
@@ -74,7 +71,7 @@ printPat(tuplepat(L)) :- print('('), printPats(L), print(')'), !.
 printPat(numpat(i)) :- print(i), !.
 printPat(boolpat(b)) :- print(b), !.
 printPat(strpat(s)) :- print(s), !.
-printPat(A,[],_) :- writeMsg([nl,nl,'Typechecker Error: Unknown pattern ',print(A),nl,nl]), throw(error('unknown pattern')).
+printPat(A,[],_) :- nl,nl,print('Typechecker Error: Unknown pattern to print '),print(A),nl,nl, throw(error('unknown pattern')).
 
 instanceOfList(Env,[],[],Env).
 instanceOfList(Env,[H|T],[G|S],NewEnv) :- instanceOf(Env,H,G,Env1), instanceOfList(Env1,T,S,NewEnv).
@@ -94,7 +91,7 @@ makeInstance(X,Y) :- instanceOf([],X,Y,_).
 exists(Env,Name) :- member((Name,_),Env), !.
 
 find(Env,Name,Type) :- member((Name,Type),Env), !.
-find(Env,Name,Type) :- writeMsg(['Failed to find ',Name,' with type ',Type,' in environment : ']), print(Env), nl, throw(typeerror('unbound identifier')).
+find(Env,Name,Type) :- print('Failed to find '),print(Name),print(' with type '),print(Type),print(' in environment : '), print(Env), nl, throw(typeerror('unbound identifier')).
 
 % The typecheckMatch predicate goes here.
 
@@ -117,7 +114,7 @@ typePat(idpat(Name),[(Name,A)],A) :- !.
 
 % Other Patterns go here
 
-typePat(A,[],_) :- writeMsg([nl,nl,'Typechecker Error: Unknown pattern ',print(A),nl,nl]), throw(error('unknown pattern')).
+typePat(A,[],_) :- nl,nl,print('Typechecker Error: Unknown pattern '),print(A),nl,nl,throw(error('unknown pattern')).
 
 printFunTypes([]).
 printFunTypes([(Name,Type)|Tail]) :- printFunTypes(Tail), print('val '), print(Name), print(' = fn : '), printType(Type,_), nl.
