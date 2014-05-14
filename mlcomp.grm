@@ -103,7 +103,7 @@ fun makeMatchList (nil) = raise emptyDecList
     | Rec
     | String of string
     | Char of string
-    | Num of string
+    | Int of string
     | True
     | False
     | Id of string
@@ -182,7 +182,7 @@ ExpSequence : Exp                                          ([Exp])
 MatchExp : Pat Arrow Exp                                   ([match(Pat,Exp)])
          | Pat Arrow Exp VerticalBar MatchExp              (match(Pat,Exp)::MatchExp)
 
-Pat : Num                                                  (numpat(Num))
+Pat : Int                                                  (intpat(Int))
     | Char                                                 (chpat(Char))
     | String                                               (strpat(String))
     | True                                                 (boolpat("true"))
@@ -222,7 +222,7 @@ CurriedFun :
            Id PatternSeq Equals Exp                        ([(Id,PatternSeq,Exp)])
          | Id PatternSeq Equals Exp VerticalBar CurriedFun ((Id,PatternSeq,Exp)::CurriedFun)
 
-Con : Num                                                  (num(Num))
+Con : Int                                                  (int(Int))
     | Char                                                 (ch(Char))
     | String                                               (str(String))
     | True                                                 (boolval("true"))

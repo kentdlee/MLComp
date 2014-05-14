@@ -2,7 +2,7 @@ structure MLAS =
 struct
 
 datatype
-    exp = num of string
+    exp = int of string
         | ch of string
         | str of string
         | boolval of string
@@ -21,7 +21,7 @@ datatype
   and
     match = match of pat * exp
   and
-    pat = numpat of string
+    pat = intpat of string
         | chpat of string
         | strpat of string
         | boolpat of string

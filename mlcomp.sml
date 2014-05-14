@@ -101,7 +101,7 @@ open MLAS;
      (* These names make debugging easier when something is not yet implemented. *)
      exception Unimplemented; 
 
-     fun nameOf(num(i)) = "num"
+     fun nameOf(int(i)) = "int"
        | nameOf(ch(c)) = "ch"
        | nameOf(boolval(b)) = "bool"
        | nameOf(id(name)) = "id"
@@ -121,8 +121,8 @@ open MLAS;
 
 
     (* The constants function is responsible for returning a list of all literal values in a program. 
-       Literals are things like integers, floating point numbers, strings, characters, etc. *)
-     fun patConsts(numpat(s)) = [s]
+       Literals are things like integers, strings, characters, etc. *)
+     fun patConsts(intpat(s)) = [s]
        | patConsts(boolpat(b)) = [if b = "true" then "True" else "False"]
        | patConsts(chpat(s)) = [s]
        | patConsts(strpat(s)) = [s]
@@ -143,7 +143,7 @@ open MLAS;
                | decconsts(funmatch(name,L)) = ["code("^name^")"]
                | decconsts(funmatches(L)) = List.foldr (fn (x,y) => (decconsts (funmatch(x))) @ y) [] L
 
-             and con(num(i)) = [i]
+             and con(int(i)) = [i]
                | con(boolval(b)) = [if b = "true" then "True" else "False"]
                | con(id(name)) = []
                | con(infixexp(operator,t1,t2)) = (con t1) @ (con t2)
@@ -183,7 +183,7 @@ open MLAS;
         in this function as it is written. *)
 
      fun patBindings(idpat("nil"),scope) = [] 
-       | patBindings(numpat(v),scope) = []
+       | patBindings(intpat(v),scope) = []
        | patBindings(boolpat(v),scope) = []
        | patBindings(strpat(v),scope) = []
        | patBindings(idpat(name),scope) = [(name,name^"@"^Int.toString(scope))]
@@ -205,7 +205,7 @@ open MLAS;
 
              fun addIt(value,var) = (var := (value::(!var)); value)
 
-             fun bindingsOf(num(n),bindings,scope) = ()
+             fun bindingsOf(int(n),bindings,scope) = ()
                | bindingsOf(boolval(n),bindings,scope) = ()
                | bindingsOf(ch(c),bindings,scope) = ()
                | bindingsOf(str(s),bindings,scope) = ()
@@ -341,9 +341,6 @@ open MLAS;
 
            let val index = indexOf(realName,cellVars) 
            in
-             TextIO.output(TextIO.stdOut,"CellVars are: ");
-             printList cellVars;
-             TextIO.output(TextIO.stdOut, "\n"^realName^" "^Int.toString(index)^"\n");
              TextIO.output(outFile,indent^"STORE_DEREF "^Int.toString(index)^"\n")
            end
 
@@ -431,7 +428,7 @@ open MLAS;
         as a recursive descent of the tree, generating the appropriate instructions as it traverses
         the tree. *)
            
-     fun codegen(num(i),outFile,indent,consts,locals,freeVars,cellVars,globals,env,globalBindings,scope) = 
+     fun codegen(int(i),outFile,indent,consts,locals,freeVars,cellVars,globals,env,globalBindings,scope) = 
          let val index = lookupIndex(i,consts)
          in
            TextIO.output(outFile,indent^"LOAD_CONST "^index^"\n")
@@ -691,7 +688,7 @@ open MLAS;
            []
          end
 
-       | patmatch(numpat(v), outFile,indent,consts,locals,freeVars,cellVars,globals,env,scope,label) = 
+       | patmatch(intpat(v), outFile,indent,consts,locals,freeVars,cellVars,globals,env,scope,label) = 
          let val numIndex = lookupIndex(v,consts)
              val equalIndex = lookupIndex("=",cmp_op)
          in
@@ -817,7 +814,7 @@ open MLAS;
          end
 
      and nestedfuns(ast,outFile,indent,globals,env,globalBindings,scope) =
-	       let fun functions(num(n)) = ()
+	       let fun functions(int(n)) = ()
                | functions(boolval(n)) = ()
                | functions(ch(c)) = ()
                | functions(str(s)) = ()
@@ -915,7 +912,7 @@ open MLAS;
         end
 
      and makeFunctions(ast,outFile,indent,consts,locals,freeVars,cellVars,env,globalBindings,scope) =
-         let fun functions(num(n)) = ()
+         let fun functions(int(n)) = ()
                | functions(boolval(n)) = ()
                | functions(ch(c)) = ()
                | functions(str(s)) = ()
@@ -993,11 +990,11 @@ open MLAS;
                | printList(write,indent,[h]) = write(indent,h)
                | printList(write,indent,h::t) = (write(indent,h); print(indent^","); printList(write,indent,t))
 
-             fun writeExp(indent,num(i)) = print("num("^i^")")
+             fun writeExp(indent,int(i)) = print("int('"^i^"')")
 
                | writeExp(indent,boolval(b)) = print("bool('"^b^"')")
 
-               | writeExp(indent,ch(c)) = print("ch("^c^")")
+               | writeExp(indent,ch(c)) = print("ch('"^c^"')")
 
                | writeExp(indent,str(s)) = print("str('"^s^"')")
 
@@ -1077,7 +1074,7 @@ open MLAS;
                       writeExp(indent,exp);
                       print(indent^")"))
 
-             and writePat(indent,numpat(i)) = print("numpat("^i^")")
+             and writePat(indent,intpat(i)) = print("intpat("^i^")")
 
                | writePat(indent,boolpat(b)) = print("boolpat("^b^")")
 
@@ -1184,7 +1181,6 @@ open MLAS;
              ();
            TextIO.output(outFile,"Globals: "^(commaSepList globals) ^ "\n");
            TextIO.output(outFile,"BEGIN\n");
-           TextIO.output(TextIO.stdOut,"Beginning codegen of main\n");
            makeFunctions(ast,outFile,"    ",consts,locals,[],cellVars,[],globalBindings,0);
 
            codegen(ast,outFile,"    ",consts,locals,freeVars,cellVars,globals,globalBindings,globalBindings,0);
