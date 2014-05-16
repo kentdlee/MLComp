@@ -1,7 +1,8 @@
-let fun add3 x y 0 = x + y
-      | add3 0 y z = y + z
-      | add3 x 0 z = x + z
-      | add3 x y z = x + y + z
+let val x = Int.fromString(input("Please enter an integer: "))
 in
-  println (add3 1 2 3)
-end
+	print "The value of 100 div ";
+	print x;
+	print " is ";
+	println (100 div x)
+end handle ex  => println ex
+   | redundant => ()
