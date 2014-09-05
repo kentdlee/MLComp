@@ -185,13 +185,14 @@ printPat(A,[],_) :-
         nl, nl, throw(error('printPat: unknown pattern')).
 
 /******************************************************************************************************/
-/* This is used when a function is type checked to print its type. */
+/* This is used when a function is type checked to print its type. It has the effect of closing the   */
+/* function's type if it still had uninstantiated variables in it.                                    */
 /******************************************************************************************************/
 
-printFunTypes([]) :- !.
+closeFunTypes([]) :- !.
 
-printFunTypes([(Name,Type)|Tail]) :-
-        printFunTypes(Tail), print('val '), print(Name), print(' = fn : '), printType(Type,_), nl, !.
+closeFunTypes([(Name,Type)|Tail]) :-
+        closeFunTypes(Tail), print('val '), print(Name), print(' = fn : '), printType(Type,_), nl, !.
 
 /******************************************************************************************************/
 /* The inst predicate below makes an instance of a type. 
@@ -244,8 +245,9 @@ find(Env,Name,Type) :-
 /* The typecheckMatches code typechecks each match. */
 /******************************************************************************************************/
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % The typecheckMatch predicate goes here.
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 typecheckMatches(_,_,[]).
 
 typecheckMatches(Env,Name,[Match|Tail]) :- 
@@ -265,9 +267,8 @@ typecheckMatches(Env,Name,[Match|Tail]) :-
    in the fn(_,_) will unify to their correct types. */ 
 /******************************************************************************************************/
 
-gatherFuns(Env,[],Env).
-
-gatherFuns(Env,[funmatch(Name,_)|Tail],NewEnv) :- gatherFuns([(Name,fn(_,_))|Env],Tail,NewEnv).
+gatherFuns([],[]).
+gatherFuns([funmatch(Name,_)|Tail],[(Name,fn(_,_))|FEnv]) :- gatherFuns(Tail,FEnv).
 
 /******************************************************************************************************/
 /* Responsible for typechecking each function in a series of function definitions, the 
@@ -291,7 +292,9 @@ typecheckTuplePats([],[],[]).
 typecheckTuplePats([H|T],[HT|TTypes],REnv) :- 
         typecheckPat(H,HT,HEnv), typecheckTuplePats(T,TTypes,TEnv), append(HEnv,TEnv,REnv).
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % type check lists with the typecheckListPats predicate here.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 /******************************************************************************************************/
 /* typechecking a pattern does not need an environment, but instead returns a new environment
@@ -304,7 +307,9 @@ typecheckPat(idpat(nil),listOf(_),[]) :- !.
 
 typecheckPat(idpat(Name),A,[(Name,A)]) :- !.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Other patterns go here.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 typecheckPat(A,_,_) :- 
         nl, nl, print('Typechecker Error: Unknown pattern '), print(A), 
@@ -323,10 +328,12 @@ typecheckPat(A,_,_) :-
 typecheckDec(Env,bindval(Pat,E),NewEnv) :- typecheckPat(Pat,ExpType,NewEnv), typecheckExp(Env,E,ExpType), 
     print('val '), printPat(Pat), print(' : '), copy_term(ExpType, Printable), printType(Printable,_), nl.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % The Bind Val Rec type check goes here
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 typecheckDec(Env,funmatches(L),NewEnv) :- 
-    gatherFuns([],L,NewEnv), append(NewEnv,Env,FunEnv), typecheckFuns(FunEnv,L), printFunTypes(NewEnv).
+    gatherFuns(L,FunsEnv), append(FunsEnv,Env,NewEnv), typecheckFuns(NewEnv,L), closeFunTypes(FunsEnv).
 
 /******************************************************************************************************/
 /* Typechecking an expression is called as 
@@ -335,20 +342,24 @@ typecheckDec(Env,funmatches(L),NewEnv) :-
 
    where Env is the environment, Exp is the expression to be typechecked and
    Type is the type of the expression. Typechecking a Tuple, Sequence, and a List are called when
-   typechecking an expression that contains these contains the expressions. */
+   typechecking an expression that contains these expressions. */
 /******************************************************************************************************/
 
 typecheckTuple(_,[],[]).
 
 typecheckTuple(Env,[Exp|T],[ExpT|TailType]) :- typecheckExp(Env,Exp,ExpT), typecheckTuple(Env,T,TailType).
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Typechecking sequences goes here with the typecheckSequence predicate that you write here.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 typecheckList(_,[],_).
 
 typecheckList(Env,[H|T],A) :- typecheckExp(Env,H,A), typecheckList(Env,T,A).
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % The Anonymous Function typecheck goes here. 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 typecheckExp(Env,handlexp(Exp1,Matches), T) :- 
         typecheckExp(Env,Exp1,T), typecheckMatches([('handle@',fn(exn,T))|Env],'handle@',Matches), !.
@@ -373,7 +384,7 @@ typecheckExp(Env,ifthen(Exp1,Exp2,Exp3), _) :-
         print('Error: Result types of then and else expressions must match.'), nl,
         print('Then Expression type is: '), printType(ThenType,_), nl,
         print('Else Expression type is: '), printType(ElseType,_), nl, 
-        throw(typeerror('result type mismatch in if-then-else expression')).                                               
+        throw(typeerror('result type mismatch in if-then-else expression')).
 
 typecheckExp(Env,ifthen(Exp1,_,_), _) :- 
         typecheckExp(Env,Exp1,Exp1Type), Exp1Type \= bool,
@@ -381,7 +392,9 @@ typecheckExp(Env,ifthen(Exp1,_,_), _) :-
         print('Condition Expression type was: '), printType(Exp1Type,_), nl,     
         throw(typeerror('type not bool in if-then-else expression condition')).
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Case and While Do Go here
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 typecheckExp(Env,apply(Exp1,Exp2),ITT) :- 
         typecheckExp(Env,Exp1,fn(FT,TT)), typecheckExp(Env,Exp2,Exp2Type), 
