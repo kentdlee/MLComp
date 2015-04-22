@@ -18,6 +18,16 @@ printMatchList(Indent,[M]) :- printMatch(Indent,M).
 printMatchList(Indent,[M|T]) :- printMatch(Indent,M), printMatchList(Indent,T).
 
 /******************************************************************************************************/
+/*  Here is code for printing a list of expressions. */
+/******************************************************************************************************/
+
+printExpList(_,[]).
+
+printExpList(Indent,[H]) :- printExp(Indent,H).
+
+printExpList(Indent,[H|T]) :- printExp(Indent,H), print(','), printExpList(Indent,T).
+
+/******************************************************************************************************/
 /* Here we print various expressions */
 /******************************************************************************************************/
 
@@ -33,7 +43,7 @@ printExp(_, id(Name)) :- print(Name), !.
 
 printExp(Indent, listcon(L)) :- print('['), printExpList(Indent,L), print(']').
 
-printExp(Indent, tuplecon(L)) :- print('('), printExpList(Indent,L), print(')').
+printExp(Indent, tuple(L)) :- print('('), printExpList(Indent,L), print(')').
 
 printExp(Indent, apply(E1,apply(E2,E3))) :- 
              printExp(Indent, E1), print(' ('), printExp(Indent, apply(E2,E3)), print(')').

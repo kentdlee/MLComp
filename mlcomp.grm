@@ -137,6 +137,16 @@ fun makeMatchList (nil) = raise emptyDecList
 
 %%
 
+(* In the grammar rules below the FuncExp is used much more than in the accompanying 
+   textbook. As it turns out, a trailing Exp (e.g. Exp Plus Exp) has a parsing 
+   problem when combined with function application. In SML writing 4 + f(2) is 
+   permissable, but if `Exp -> Exp Plus Exp` is the rule then this parses as `(4 + f)(2)`
+   instead of the correct precedence of `4 + (f 2)`. By changing all trailing Exp
+   non-terminals to FuncExp we require the correct precedence of function application
+   before these other operations. All other operations (other than function application)
+   have tokens associated with them and therefore the correct precedence is established
+   by the precedence rules above. *)
+
 Prog : Exp EOF                                             (Exp)                  
 
 Exp : Con                                                  (Con)
@@ -144,19 +154,19 @@ Exp : Con                                                  (Con)
     | FuncExp Exp                                          (apply(FuncExp,Exp))
     | Exclaim Exp                                          (apply(id("!"),Exp))
     | Id SetEqual FuncExp                                  (infixexp(":=",id(Id),FuncExp))
-    | Exp Plus Exp                                         (infixexp("+",Exp1,Exp2))
-    | Exp Minus Exp                                        (infixexp("-",Exp1,Exp2))
-    | Exp Times Exp                                        (infixexp("*",Exp1,Exp2))
-    | Exp Div Exp                                          (infixexp("div",Exp1,Exp2))
-    | Exp Mod Exp                                          (infixexp("mod",Exp1,Exp2))
-    | Exp Greater Exp                                      (infixexp(">",Exp1,Exp2))
-    | Exp GreaterEqual Exp                                 (infixexp(">=",Exp1,Exp2))
-    | Exp Less Exp                                         (infixexp("<",Exp1,Exp2))
-    | Exp LessEqual Exp                                    (infixexp("<=",Exp1,Exp2))
-    | Exp Equals Exp                                       (infixexp("=",Exp1,Exp2))
-    | Exp NotEqual Exp                                     (infixexp("<>",Exp1,Exp2))
-    | Exp Append Exp                                       (infixexp("@",Exp1,Exp2))
-    | Exp ListCons Exp                                     (infixexp("::",Exp1,Exp2))
+    | Exp Plus FuncExp                                     (infixexp("+",Exp,FuncExp))
+    | Exp Minus FuncExp                                    (infixexp("-",Exp,FuncExp))
+    | Exp Times FuncExp                                    (infixexp("*",Exp,FuncExp))
+    | Exp Div FuncExp                                      (infixexp("div",Exp,FuncExp))
+    | Exp Mod FuncExp                                      (infixexp("mod",Exp,FuncExp))
+    | Exp Greater FuncExp                                  (infixexp(">",Exp,FuncExp))
+    | Exp GreaterEqual FuncExp                             (infixexp(">=",Exp,FuncExp))
+    | Exp Less FuncExp                                     (infixexp("<",Exp,FuncExp))
+    | Exp LessEqual FuncExp                                (infixexp("<=",Exp,FuncExp))
+    | Exp Equals FuncExp                                   (infixexp("=",Exp,FuncExp))
+    | Exp NotEqual FuncExp                                 (infixexp("<>",Exp,FuncExp))
+    | Exp Append FuncExp                                   (infixexp("@",Exp,FuncExp))
+    | Exp ListCons FuncExp                                 (infixexp("::",Exp,FuncExp))
     | LParen Exp RParen                                    (Exp)
     | LParen Expressions RParen                            (tuplecon(Expressions))
     | LParen ExpSequence RParen                            (expsequence(ExpSequence))
@@ -166,8 +176,8 @@ Exp : Con                                                  (Con)
                 (List.hd (List.foldr (fn (x,y) => [letdec(x,y)]) ExpSequence DecSeq))
     | Raise Exp                                            (raisexp(Exp))
     | Exp Handle MatchExp                                  (handlexp(Exp,MatchExp))
-    | If Exp Then Exp Else Exp                             (ifthen(Exp1,Exp2,Exp3))
-    | While Exp Do Exp                                     (whiledo(Exp1,Exp2))
+    | If Exp Then Exp Else FuncExp                         (ifthen(Exp1,Exp2,FuncExp))
+    | While Exp Do FuncExp                                 (whiledo(Exp,FuncExp))
 
     | Fn MatchExp                                          (func(nextIdNum(),MatchExp))
 

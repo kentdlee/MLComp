@@ -1,7 +1,6 @@
-let fun add3 x y 0 = x + y
-      | add3 0 y z = y + z
-      | add3 x 0 z = x + z
-      | add3 x y z = x + y + z
+let val L as h::t = [1,2,3,4]
 in
-  println (add3 1 2 3)
+	print(L);
+	print(h);
+	print(t)
 end
