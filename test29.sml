@@ -1,0 +1,1 @@
+let val [(x,y,z),a] = [("hello",1,true),("a",2,false)] in println a end
