@@ -795,7 +795,7 @@ typecheckExp(Env,ifthen(Exp1,_,_), _) :-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 typecheckExp(Env,apply(Exp1,Exp2),ITT) :- 
-        typecheckExp(Env,Exp1,fn(FT,TT)), typecheckExp(Env,Exp2,Exp2Type), inst(Exps2Type,Exp2TypeInst),
+        typecheckExp(Env,Exp1,fn(FT,TT)), typecheckExp(Env,Exp2,Exp2Type), inst(Exp2Type,Exp2TypeInst),
         catch(inst(fn(FT,TT), fn(Exp2TypeInst,ITT)),_, 
         printApplicationErrorMessage(Exp1,fn(FT,TT),Exp2,Exp2Type,ITT)), !.
 
