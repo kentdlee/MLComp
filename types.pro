@@ -457,7 +457,9 @@ closeFunTypes([]) :- !.
 closeFunTypes([(Name,Type)|Tail]) :-
         closeFunTypes(Tail), print('val '), print(Name), print(' = fn : '), printType(Type,_), nl, !.
 
-exists(Env,Name) :- member((Name,_),Env).
+closeExp(Pat,Type) :-  print('val '), printPat(Pat), print(' : '), printType(Type,_), nl, !.
+
+exists(Env,Name) :- member((Name,_),Env), !.
 
 instanceOfList(Env,[],[],Env).
 
@@ -484,7 +486,7 @@ instanceOf(Env,typevar(A),B,Env) :- exists(Env,A), find(Env,A,B), !.
    case.
 */
  
-instanceOf(Env,typevar(A),B,[(A,B)|Env]) :- !. 
+instanceOf(Env,typevar(A),B,[(A,B)|Env]) :- !.
 
 instanceOf(_,A,B,_) :- 
         print('Type Error: Type '), printType(B,_), print(' is not an instance of '), 
@@ -554,10 +556,10 @@ find(Env,Name,Type) :-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % The typecheckMatch predicate goes here.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-typecheckMatches(_,_,[]).
+typecheckMatches(_,_,[]) :- !.
 
 typecheckMatches(Env,Name,[Match|Tail]) :- 
-        typecheckMatch(Env,Name,Match), typecheckMatches(Env,Name,Tail).
+        typecheckMatch(Env,Name,Match), typecheckMatches(Env,Name,Tail), !.
 
 /******************************************************************************************************
 
@@ -581,8 +583,8 @@ typecheckMatches(Env,Name,[Match|Tail]) :-
 
 *******************************************************************************************************/
 
-gatherFuns([],[]).
-gatherFuns([funmatch(Name,_)|Tail],[(Name,fn(_,_))|FEnv]) :- gatherFuns(Tail,FEnv).
+gatherFuns([],[]) :- !.
+gatherFuns([funmatch(Name,_)|Tail],[(Name,fn(_,_))|FEnv]) :- gatherFuns(Tail,FEnv), !.
 
 /******************************************************************************************************
 
@@ -619,8 +621,8 @@ gatherFuns([funmatch(Name,_)|Tail],[(Name,fn(_,_))|FEnv]) :- gatherFuns(Tail,FEn
 
 typecheckFun(Env,funmatch(Name,Matches)) :- typecheckMatches(Env,Name,Matches).
 
-typecheckFuns(_,[]).
-typecheckFuns(Env,[FunMatch|Tail]) :- typecheckFun(Env,FunMatch), typecheckFuns(Env,Tail).
+typecheckFuns(_,[]) :- !.
+typecheckFuns(Env,[FunMatch|Tail]) :- typecheckFun(Env,FunMatch), typecheckFuns(Env,Tail), !.
 
 /******************************************************************************************************
 
@@ -709,14 +711,14 @@ typecheckPat(A,_,_) :-
 *******************************************************************************************************/
 
 typecheckDec(Env,bindval(Pat,E),NewEnv) :- typecheckPat(Pat,ExpType,NewEnv), typecheckExp(Env,E,ExpType), 
-    print('val '), printPat(Pat), print(' : '), copy_term(ExpType, Printable), printType(Printable,_), nl.
+    closeExp(Pat,ExpType), !.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % The Bind Val Rec type check goes here
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 typecheckDec(Env,funmatches(L),NewEnv) :- 
-    gatherFuns(L,FunsEnv), append(FunsEnv,Env,NewEnv), typecheckFuns(NewEnv,L), closeFunTypes(FunsEnv).
+    gatherFuns(L,FunsEnv), append(FunsEnv,Env,NewEnv), typecheckFuns(NewEnv,L), closeFunTypes(FunsEnv), !.
 
 /******************************************************************************************************
 
@@ -743,17 +745,17 @@ typecheckDec(Env,funmatches(L),NewEnv) :-
 
 *******************************************************************************************************/
 
-typecheckTuple(_,[],[]).
+typecheckTuple(_,[],[]) :- !.
 
-typecheckTuple(Env,[Exp|T],[ExpT|TailType]) :- typecheckExp(Env,Exp,ExpT), typecheckTuple(Env,T,TailType).
+typecheckTuple(Env,[Exp|T],[ExpT|TailType]) :- typecheckExp(Env,Exp,ExpT), typecheckTuple(Env,T,TailType), !.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Typechecking sequences goes here with the typecheckSequence predicate that you write here.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-typecheckList(_,[],_).
+typecheckList(_,[],_) :- !.
 
-typecheckList(Env,[H|T],A) :- typecheckExp(Env,H,A), typecheckList(Env,T,A).
+typecheckList(Env,[H|T],A) :- typecheckExp(Env,H,A), typecheckList(Env,T,A), !.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % The Anonymous Function typecheck goes here. 
@@ -766,13 +768,13 @@ typecheckExp(Env,handlexp(Exp1,Matches), _) :-
         typecheckExp(Env,Exp1,T), typecheckMatches([('handle@',fn(exn,S))|Env],'handle@',Matches),
         T \= S, print('Error: Expression and exception handler must result in same type.'), nl,
         print('Expression type was '), printType(T, _), print(' and handler type is '), 
-        printType(S,_), nl, throw(typeerror('expression and handler typemismatch')).
+        printType(S,_), nl, throw(typeerror('expression and handler typemismatch')), !.
 
-typecheckExp(Env,expsequence(L),T) :- typecheckSequence(Env,L,T).
+typecheckExp(Env,expsequence(L),T) :- typecheckSequence(Env,L,T), !.
 
 typecheckExp(_,id(nil),listOf(_)) :- !.
 
-typecheckExp(Env,id(Name),Type) :-  find(Env,Name,Type). 
+typecheckExp(Env,id(Name),Type) :-  find(Env,Name,Type), !. 
 
 typecheckExp(Env,ifthen(Exp1,Exp2,Exp3), RT) :- 
         typecheckExp(Env,Exp1,bool), typecheckExp(Env,Exp2,RT), typecheckExp(Env,Exp3,RT), !.
@@ -782,13 +784,13 @@ typecheckExp(Env,ifthen(Exp1,Exp2,Exp3), _) :-
         print('Error: Result types of then and else expressions must match.'), nl,
         print('Then Expression type is: '), printType(ThenType,_), nl,
         print('Else Expression type is: '), printType(ElseType,_), nl, 
-        throw(typeerror('result type mismatch in if-then-else expression')).
+        throw(typeerror('result type mismatch in if-then-else expression')), !.
 
 typecheckExp(Env,ifthen(Exp1,_,_), _) :- 
         typecheckExp(Env,Exp1,Exp1Type), Exp1Type \= bool,
         print('Error: Condition of if then expression must have bool type.'), nl,
         print('Condition Expression type was: '), printType(Exp1Type,_), nl,     
-        throw(typeerror('type not bool in if-then-else expression condition')).
+        throw(typeerror('type not bool in if-then-else expression condition')), !.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Case and While Do Go here
@@ -800,27 +802,25 @@ typecheckExp(Env,apply(Exp1,Exp2),ITT) :-
         printApplicationErrorMessage(Exp1,fn(FT,TT),Exp2,Exp2Type,ITT)), !.
 
 typecheckExp(Env,letdec(D,Seq), T) :- 
-        typecheckDec(Env,D,Env2), append(Env2, Env, InEnv), typecheckSequence(InEnv, Seq, T).
+        typecheckDec(Env,D,Env2), append(Env2, Env, InEnv), typecheckSequence(InEnv, Seq, T), !.
 
-typecheckExp(Env,listcon(L),listOf(T)) :- typecheckList(Env,L,T).
+typecheckExp(Env,listcon(L),listOf(T)) :- typecheckList(Env,L,T), !.
 
-typecheckExp(_,int(_),int).
+typecheckExp(_,int(_),int) :- !.
 
-typecheckExp(_,bool(_),bool).
+typecheckExp(_,bool(_),bool) :- !.
 
-typecheckExp(_,str(_),str).
+typecheckExp(_,str(_),str) :- !.
 
-typecheckExp(Env,tuple(L),tuple(T)) :- typecheckTuple(Env,L,T). 
+typecheckExp(Env,tuple(L),tuple(T)) :- typecheckTuple(Env,L,T), !.
 
 typecheckExp(_,Exp,_) :- 
         nl, nl, print('Typechecker Error: Unknown expression '), print(Exp),
-        nl, nl, throw(error('typecheckExp: unknown expression')).
+        nl, nl, throw(error('typecheckExp: unknown expression')), !.
 
 /******************************************************************************************************
-  Below is the initial environment that is used when typechecking a program. This environment includes
-  all built-in operators and functions that are available to the Small language. 
+  Here we have various error and status messages that may be displayed during type checking.  
 *******************************************************************************************************/
-
 
 printApplicationErrorMessage(Fun,fn(A,B),Arg,_,ResultType) :- B \= ResultType,
         print('Error: Type error in function application.'), nl, print('The function type is'), nl, nl,
@@ -832,7 +832,7 @@ printApplicationErrorMessage(Fun,FunType,Arg,ArgType, _) :-
         print('Error: Type error in function application.'), nl, print('The function type is'), nl, nl,
         printType(FunType,_), nl, nl, print('and the argument type is'), nl, nl, printType(ArgType,_), nl, nl,
         print('in function application:'), nl, nl, printExp('',apply(Fun,Arg)), nl,
-        throw(typeerror('type incompatibility in function application')).
+        throw(typeerror('type incompatibility in function application')), !.
 
 finalStatus(typeerror) :- print('The program failed to pass the typechecker.'), nl, !.
 
@@ -860,6 +860,7 @@ typecheckProgram(Expression,Type) :-
                   ('ref',fn(typevar(a),ref(typevar(a)))),
                   ('::',fn(tuple([typevar(a),listOf(typevar(a))]),listOf(typevar(a)))),
                   ('>', fn(tuple([typevar(a),typevar(a)]),bool)),
+                  ('=', fn(tuple([typevar(a),typevar(a)]),bool)),
                   ('<', fn(tuple([typevar(a),typevar(a)]),bool)),
                   (@,fn(tuple([listOf(typevar(a)),listOf(typevar(a))]),listOf(typevar(a)))),
                   ('Int.fromString',fn(str,int)),
