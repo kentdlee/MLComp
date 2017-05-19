@@ -158,18 +158,6 @@ open MLAS;
                       writeExp(indent,tuplecon([exp1,exp2]));
                       print(")"))
 
-(*               | writeExp(indent,infixexp(opstr,exp1,exp2)) = 
-                     (print("infixexp('"^opstr^"',"); 
-                      writeExp(indent,exp1); 
-                      print(","); 
-                      writeExp(indent,exp2);
-                      print(")"))*)
-
-               | writeExp(indent,negate(exp)) =
-                     (print("negate(");
-                      writeExp(indent,exp);
-                      print(")"))
-
                | writeExp(indent,expsequence(L)) = 
                      (println(indent^"expsequence(["); 
                       printList(writeExp,indent^"   ",L); 
@@ -210,13 +198,6 @@ open MLAS;
                       println("\n"^indent^","); 
                       writeExp(indent^"   ",exp2);
                       println("\n"^indent^")"))
-
-               | writeExp(indent,caseof(exp,L)) = 
-                     (print(indent^"caseof("); 
-                      writeExp(indent^"   ",exp); 
-                      println("\n"^indent^", ["); 
-                      printList(writeMatch,indent^"   ",L); 
-                      print(indent^"])"))
                
                | writeExp(indent,func(i,L)) = 
                      (println(indent^"func('anon@"^Int.toString(i)^"',["); 
