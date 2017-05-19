@@ -1,0 +1,12 @@
+#!/bin/bash
+for f in $( ls test*.sml ); do
+    base=`basename $f .sml`
+	echo ++++Testing $base++++ 
+	mlcomp $f >  $base.latest 2> /dev/null << EOF
+EOF
+	diff $base.txt $base.latest
+	rm $base.latest
+
+done
+
+

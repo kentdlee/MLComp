@@ -13,7 +13,7 @@ open MLAS;
      exception nameMismatch;
 
      val debug = false;
-                    
+
      val input_line =
        fn f =>
           let val sOption = TextIO.inputLine f
@@ -60,7 +60,7 @@ open MLAS;
      exception notFound;
 
      fun print text = TextIO.output(TextIO.stdOut,text^"\n");
-     fun printList lst = TextIO.output(TextIO.stdOut,(commaSepList lst)^"\n");
+     fun printList lst = TextIO.output(TextIO.stdOut,"["^(commaSepList lst)^"]\n");
 
      fun raiseit(e,msg) = 
          (if debug then print(msg) else ();
@@ -81,7 +81,7 @@ open MLAS;
 
      fun lookupIndex(name,lst) = 
          (Int.toString(indexOf(name,lst))) handle notFound =>
-          (TextIO.output(TextIO.stdOut,name^" was not found in the list " ^ (commaSepList lst) ^ ".\n");
+          (TextIO.output(TextIO.stdOut,name^" was not found in the list [" ^ (commaSepList lst) ^ "].\n");
            raise notFound)
 
      fun exists (x:string) L = List.exists (fn y => x = y) L
@@ -99,7 +99,6 @@ open MLAS;
        | concat (h::t) = h @ (concat t)
 
      (* These names make debugging easier when something is not yet implemented. *)
-     exception Unimplemented; 
 
      fun nameOf(int(i)) = "int"
        | nameOf(ch(c)) = "ch"
@@ -113,12 +112,187 @@ open MLAS;
        | nameOf(expsequence(L)) = "expsequence"
        | nameOf(letdec(L1,L2)) = "letdec"
        | nameOf(handlexp(e,L)) = "handlexp"
+       | nameOf(raisexp(e)) = "raisexp"
        | nameOf(ifthen(e1,e2,e3)) = "ifthen"
        | nameOf(whiledo(e1,e2)) = "whiledo"
-       | nameOf(raisexp(e)) = "raisexp"
-       | nameOf(func(idnum,L)) = "func"^Int.toString(idnum)
+       | nameOf(func(idnum,L)) = "func"^Int.toString(idnum);
+
+     fun writeTerm(outFile,ast) = 
+         let fun print(s) = TextIO.output(outFile,s)
+
+             fun println(s) = print(s^"\n")
+
+             fun printList(write,indent,nil) = ()
+               | printList(write,indent,[h]) = write(indent,h)
+               | printList(write,indent,h::t) = (write(indent,h); print(indent^","); printList(write,indent,t))
+
+             fun writeExp(indent,int(i)) = print("int('"^i^"')")
+
+               | writeExp(indent,boolval(b)) = print("bool('"^b^"')")
+
+               | writeExp(indent,ch(c)) = print("ch('"^c^"')")
+
+               | writeExp(indent,str(s)) = print("str('"^s^"')")
+
+               | writeExp(indent,id(name)) = print("id('"^name^"')")
+
+               | writeExp(indent,listcon(L)) = 
+                     (print("listcon([");
+                      printList(writeExp,indent,L);
+                      print("])"))
+
+               | writeExp(indent,tuplecon(L)) = 
+                     (print("tuplecon([");
+                      printList(writeExp,indent,L);
+                      print("])"))
+
+               | writeExp(indent,apply(exp1,exp2)) = 
+                     (print("apply("); 
+                      writeExp(indent,exp1); 
+                      print(","); 
+                      writeExp(indent,exp2);
+                      print(")"))
+
+               | writeExp(indent,infixexp(opstr,exp1,exp2)) = 
+                     (print("apply(id('"^opstr^"'),"); 
+                      writeExp(indent,tuplecon([exp1,exp2]));
+                      print(")"))
+
+(*               | writeExp(indent,infixexp(opstr,exp1,exp2)) = 
+                     (print("infixexp('"^opstr^"',"); 
+                      writeExp(indent,exp1); 
+                      print(","); 
+                      writeExp(indent,exp2);
+                      print(")"))*)
+
+               | writeExp(indent,negate(exp)) =
+                     (print("negate(");
+                      writeExp(indent,exp);
+                      print(")"))
+
+               | writeExp(indent,expsequence(L)) = 
+                     (println(indent^"expsequence(["); 
+                      printList(writeExp,indent^"   ",L); 
+                      println(indent^"])"))
+
+               | writeExp(indent,letdec(dec,L)) = 
+                     (println(indent^"letdec("); 
+                      writeDec(indent^"   ",dec); 
+                      println(",\n"^indent^"   ["); 
+                      printList(writeExp,indent^"    ",L); 
+                      println("\n"^indent^"   ])"))
+
+               | writeExp(indent,raisexp(exp)) = 
+                     (print("apply(id('raise'),"); 
+                      writeExp(indent,exp); 
+                      print(")"))
+
+               | writeExp(indent,handlexp(exp,L)) = 
+                     (println(indent^"handlexp("); 
+                      writeExp(indent^"   ",exp); 
+                      println("\n"^indent^", ["); 
+                      printList(writeMatch,indent^"   ",L); 
+                      println(indent^"])"))
 
 
+               | writeExp(indent,ifthen(exp1,exp2,exp3)) = 
+                     (println(indent^"ifthen("); 
+                      writeExp(indent^"   ",exp1); 
+                      println("\n"^indent^","); 
+                      writeExp(indent^"   ",exp2);
+                      println("\n"^indent^","); 
+                      writeExp(indent^"   ",exp3);
+                      println("\n"^indent^")"))
+ 
+               | writeExp(indent,whiledo(exp1,exp2)) = 
+                     (println(indent^"whiledo("); 
+                      writeExp(indent^"   ",exp1); 
+                      println("\n"^indent^","); 
+                      writeExp(indent^"   ",exp2);
+                      println("\n"^indent^")"))
+
+               | writeExp(indent,caseof(exp,L)) = 
+                     (print(indent^"caseof("); 
+                      writeExp(indent^"   ",exp); 
+                      println("\n"^indent^", ["); 
+                      printList(writeMatch,indent^"   ",L); 
+                      print(indent^"])"))
+               
+               | writeExp(indent,func(i,L)) = 
+                     (println(indent^"func('anon@"^Int.toString(i)^"',["); 
+                      printList(writeMatch,indent^"   ",L); 
+                      print("\n"^indent^"])"))
+
+             and writeMatch(indent,match(pat,exp)) = 
+                     (print(indent^"match(");
+                      writePat(indent,pat);
+                      print(indent^",");
+                      writeExp(indent,exp);
+                      print(indent^")"))
+
+             and writePat(indent,intpat(i)) = print("intpat("^i^")")
+
+               | writePat(indent,boolpat(b)) = print("boolpat("^b^")")
+
+               | writePat(indent,chpat(c)) = print("chpat('"^c^"')")
+              
+               | writePat(indent,strpat(s)) = print("strpat('"^s^"')")
+
+               | writePat(indent,idpat(name)) = print("idpat('"^name^"')")
+           
+               | writePat(indent,wildcardpat) = print("wildcardpat")
+    
+               | writePat(indent,infixpat(opstr,pat1,pat2)) = 
+                     (print("infixpat('"^opstr^"',"); 
+                      writePat(indent,pat1); 
+                      print(","); 
+                      writePat(indent,pat2);
+                      print(")"))
+
+               | writePat(indent,listpat(L)) = 
+                     (print("listpat([");
+                      printList(writePat,indent,L);
+                      print("])"))
+
+               | writePat(indent,tuplepat(L)) = 
+                     (print("tuplepat([");
+                      printList(writePat,indent,L);
+                      print("])"))
+
+               | writePat(indent,aspat(name,pat)) = 
+                     (print("aspat('"^name^"',");
+                      writePat(indent,pat);
+                      print(")"))
+
+            and writeDec(indent,bindval(pat,exp)) = 
+                     (print(indent^"bindval(");
+                      writePat(indent,pat);
+                      print(",");
+                      writeExp(indent,exp);
+                      print(")"))
+
+              | writeDec(indent,bindvalrec(pat,exp)) = 
+                     (print(indent^"bindvalrec(");
+                      writePat(indent,pat);
+                      print(",");
+                      writeExp(indent,exp);
+                      print(indent^")"))
+
+              | writeDec(indent,funmatch(name,L)) = 
+                     (println(indent^"funmatch('"^name^"',[");
+                      printList(writeMatch,indent^"   ",L);
+                      println(indent^"])"))
+
+              | writeDec(indent,funmatches(L)) = 
+                     (println(indent^"funmatches([");
+                      printList(writeDec,indent,List.map (fn (x,y) => funmatch(x,y)) L);
+                      println(indent^"])"))
+         in
+           writeExp("",ast);
+           println(".")
+         end
+
+     exception Unimplemented; 
 
     (* The constants function is responsible for returning a list of all literal values in a program. 
        Literals are things like integers, strings, characters, etc. *)
@@ -127,11 +301,11 @@ open MLAS;
        | patConsts(chpat(s)) = [s]
        | patConsts(strpat(s)) = [s]
        | patConsts(idpat(n)) = []
+       | patConsts(aspat(n,pat)) = patConsts(pat)
        | patConsts(wildcardpat) = []
        | patConsts(infixpat(oper,pat1,pat2)) = patConsts(pat1) @ patConsts(pat2)
        | patConsts(tuplepat(L)) = List.foldr (fn (x,y) => (patConsts x) @ y) [] L
        | patConsts(listpat(L)) =  List.foldr (fn (x,y) => (patConsts x) @ y) [] L
-       | patConsts(aspat(n,pat)) = patConsts(pat)
 
      fun constants(ast) = 
          let fun decconsts(bindval(_,exp)) = con exp
@@ -177,10 +351,12 @@ open MLAS;
         must include any variables defined in the outer scope. 
 
         The return value from this function is a tuple of the bindings created in this expression, the free variables, 
-        and the cell variables that appear in the expression. The free variables and cell variables that are returned 
-        are a list of the source names of the free and cell variables, not the target names. This is because the free 
+        and the cell variables that appear in the expression. The free variables that are returned 
+        are a list of the source names of the free variables, not the target names. This is because the free 
         variable target names cannot be determined without examining the enclosing bindings which are not available 
-        in this function as it is written. *)
+        in this function as it is written. 
+
+        The cell variables that are returned are a list of the target program variables. *)
 
      fun patBindings(idpat("nil"),scope) = [] 
        | patBindings(intpat(v),scope) = []
@@ -194,6 +370,11 @@ open MLAS;
           raise Unimplemented) 
 
      and localBindings(ast,pats,globalBindings,scope) = 
+         (* The freeVars is a list of the identifiers from the source program. 
+            The cellVars is a list of the identifiers from the target (i.e. CoCo) program. 
+            The theBindings is a list of source program to target program identifier tuples mapping 
+            source program identifiers to target program identifiers. 
+         *)
          let val freeVars = ref []
 
              val cellVars = ref []
@@ -234,16 +415,20 @@ open MLAS;
                    ()
                  end
                | bindingsOf(func(idnum,L),bindings,scope) = 
-                 let val bindingsandvars =List.map (fn match(pat,exp) =>
-                                                let val patB = patBindings(pat,scope+1)
-                                                in
-                                                  localBindings(exp,patB,globalBindings,scope+1)
-                                                end) L
-                     val nestedfunfreevars = removeDups (concat (List.map (fn x => (#2(x))) bindingsandvars))
-                     val idNames = List.map (fn (x,y) => x) (pats@bindings)
-                 in
-                   List.map (fn x => if exists x idNames then (addIt(x,cellVars)) else (addIt(x,freeVars))) nestedfunfreevars;
-                   ()
+                 let val varNames = List.map (fn (x,y) => x) (pats@bindings)
+                 in 
+
+                     List.map (fn match(pat,exp) =>
+                                  let val patB = patBindings(pat,scope+1)
+                                      val lb = localBindings(exp,patB,globalBindings,scope+1)
+                                      val newfreevars = removeDups (#2(lb))
+                                  in
+                                      List.map (fn freevar => if exists freevar varNames 
+                                                              then (addIt(boundTo(freevar,pats@bindings),cellVars)) 
+                                                              else (addIt(freevar,freeVars))
+                                               ) newfreevars
+                                  end) L;
+                     ()
                  end 
 
                | bindingsOf(other,bindings,scope) = 
@@ -261,16 +446,20 @@ open MLAS;
                  end
 
                | decbindingsOf(bindvalrec(idpat(name),exp as func(idnum,L)),bindings,scope) = 
-                 let val bindingsandvars =List.map (fn match(pat,exp) =>
-                                                let val patB = patBindings(pat,scope+1)
-                                                in
-                                                  localBindings(exp,patB,globalBindings,scope+1)
-                                                end) L
-                     val nestedfunfreevars = removeDups (concat (List.map (fn x => (#2(x))) bindingsandvars))
-                     val idNames = List.map (fn (x,y) => x) ((name,name)::(pats@bindings))
+                 let val locals = (name,name)::(pats@bindings)
+                     val idNames = List.map (fn (x,y) => x) locals
                  in
-                   List.map (fn x => if exists x idNames then (addIt(x,cellVars)) else (addIt(x,freeVars))) nestedfunfreevars;
-                   [addIt((name,name),theBindings)]
+                     List.map (fn match(pat,exp) =>
+                                  let val patB = patBindings(pat,scope+1)
+                                      val lb = localBindings(exp,patB,globalBindings,scope+1)
+                                      val freevars = #2(lb)
+                                  in
+                                      List.map (fn var => if exists var idNames 
+                                                              then (addIt(boundTo(var, locals), cellVars)) 
+                                                              else (addIt(var,freeVars))
+                                               ) freevars
+                                  end) L;
+                     [addIt((name,name),theBindings)]
                  end
 
                | decbindingsOf(bindvalrec(_,exp),bindings,scope) =
@@ -279,16 +468,20 @@ open MLAS;
 
                | decbindingsOf(funmatch(name,nil),bindings,scope) = []
                | decbindingsOf(funmatch(name,L),bindings,scope) = 
-                 let val bindingsandvars =List.map (fn match(pat,exp) =>
-                                                let val patB = patBindings(pat,scope+1)
-                                                in
-                                                  localBindings(exp,patB,globalBindings,scope+1)
-                                                end) L
-                     val nestedfunfreevars = removeDups (concat (List.map (fn x => (#2(x))) bindingsandvars))
+                 let val locals = (name,name)::(pats@bindings)
                      val idNames = List.map (fn (x,y) => x) ((name,name)::(pats@bindings))
                  in
-                   List.map (fn x => if exists x idNames then (addIt(x,cellVars)) else (addIt(x,freeVars))) nestedfunfreevars;
-                   [addIt((name,name),theBindings)]
+                     List.map (fn match(pat,exp) =>
+                                  let val patB = patBindings(pat,scope+1)
+                                      val lb = localBindings(exp,patB,globalBindings,scope+1)
+                                      val freevars = #2(lb)
+                                  in
+                                      List.map (fn var => if exists var idNames 
+                                                          then (addIt(boundTo(var, locals), cellVars)) 
+                                                          else (addIt(var,freeVars))
+                                               ) freevars
+                                  end) L;
+                     [addIt((name,name),theBindings)]
                  end 
 
                | decbindingsOf(funmatches(L),bindings,scope) = 
@@ -302,14 +495,18 @@ open MLAS;
                  end
 
          in
-           if debug then print("Entering localBindings function") else ();
+           if debug then print("Entering localBindings function for this AST") else ();
+           if debug then writeTerm(TextIO.stdOut, ast) else ();
            bindingsOf(ast,globalBindings,scope);
            if debug then ( 
-              print("Exiting localBindings function");
+              print("Exiting localBindings function for this ast");
+              writeTerm(TextIO.stdOut, ast);
               print("The cellVars are: ");
               printList(!cellVars);
               print("The freeVars are: ");
-              printList(!freeVars)
+              printList(!freeVars);
+              print("The bindings are:");
+              printBindings(!theBindings)
            ) else ();
            (!theBindings, !freeVars, !cellVars)
          end
@@ -451,7 +648,7 @@ open MLAS;
          TextIO.output(outFile, indent^"BUILD_FUNLIST 0\n")
             
        | codegen(id(name),outFile,indent,consts,locals,freeVars,cellVars,globals,env,globalBindings,scope) = 
-         load(name,outFile,indent,locals,freeVars,cellVars,globals,env)                      
+         load(name,outFile,indent,locals,freeVars,cellVars,globals,env)
 
        | codegen(apply(t1,t2),outFile,indent,consts,locals,freeVars,cellVars,globals,env,globalBindings,scope) =
          let val _ = codegen(t1,outFile,indent,consts,locals,freeVars,cellVars,globals,env,globalBindings,scope)
@@ -672,7 +869,16 @@ open MLAS;
      (* The patmatch function is given a label to jump to if the pattern does not match. For any 
         pattern, the generated code checks to see if the value on the stop of the stack will 
         match the pattern. If it does, the variables for the pattern bindings are initialized with the 
-        appropriate values for the pattern. *)
+        appropriate values for the pattern. 
+
+        Precondition: Value to be pattern matched is on the top of the stack.
+                      The "label" is the label to jump to if the pattern does not match.
+
+        Postcondition: The value to be matched should no longer be on the stack. 
+                       A list of all the bindings of identifiers in the pattern to
+                       their storage locations should be return. All values in the 
+                       pattern should have been stored in their respective storage 
+                       locations for the pattern bindings. See the patmatch for idpat for this.  *)
   
      and patmatch(idpat("nil"),outFile,indent,consts,locals,freeVars,cellVars,globals,env,scope,label) =
          let val lenIndex = lookupIndex("len",globals)
@@ -771,7 +977,7 @@ open MLAS;
              val newbindings = (concat (List.map (fn x => (#1(x))) bindingsandvars)) @ patBs 
              val bindingVars = name^"@Param"::(removeDups (List.map (fn x => #2(x)) newbindings))
              val freeVars = List.map (fn x => boundTo(x,(name,name)::(newbindings@env@globalBindings))) (removeDups (concat (List.map (fn x => (#2(x))) bindingsandvars)))
-             val cellVars = List.map (fn x => boundTo(x,(name,name)::(newbindings@env@globalBindings))) (removeDups (concat (List.map (fn x => (#3(x))) bindingsandvars)))
+             val cellVars = (removeDups (concat (List.map (fn x => (#3(x))) bindingsandvars)))
              val locals = listdiff (listdiff bindingVars freeVars) cellVars
              val exceptionidx = lookupIndex("Exception",globals)
              val mismatch = lookupIndex("'Match Not Found'",consts)   
@@ -930,8 +1136,8 @@ open MLAS;
                | functions(letdec(d,L)) = 
                  let val lbindings = localBindings(letdec(d,[]),env,globalBindings,scope)
                      val newbindings = #1lbindings
-                     val newfreevars = removeDups (freeVars @ #2lbindings)
-                     val newcellvars = removeDups (cellVars @ #3lbindings)
+                     val newfreevars = removeDups (#2lbindings @ freeVars)
+                     val newcellvars = removeDups (#3lbindings @ cellVars) 
                  in
                    dec d; 
                    List.map (fn x => (makeFunctions(x,outFile,indent,consts,locals,newfreevars,newcellvars,newbindings@env,globalBindings,scope+1))) L; 
@@ -980,161 +1186,6 @@ open MLAS;
          in
            functions ast
          end
-
-     fun writeTerm(outFile,ast) = 
-         let fun print(s) = TextIO.output(outFile,s)
-
-             fun println(s) = print(s^"\n")
-
-             fun printList(write,indent,nil) = ()
-               | printList(write,indent,[h]) = write(indent,h)
-               | printList(write,indent,h::t) = (write(indent,h); print(indent^","); printList(write,indent,t))
-
-             fun writeExp(indent,int(i)) = print("int('"^i^"')")
-
-               | writeExp(indent,boolval(b)) = print("bool('"^b^"')")
-
-               | writeExp(indent,ch(c)) = print("ch('"^c^"')")
-
-               | writeExp(indent,str(s)) = print("str('"^s^"')")
-
-               | writeExp(indent,id(name)) = print("id('"^name^"')")
-
-               | writeExp(indent,listcon(L)) = 
-                     (print("listcon([");
-                      printList(writeExp,indent,L);
-                      print("])"))
-
-               | writeExp(indent,tuplecon(L)) = 
-                     (print("tuple([");
-                      printList(writeExp,indent,L);
-                      print("])"))
-
-               | writeExp(indent,apply(exp1,exp2)) = 
-                     (print("apply("); 
-                      writeExp(indent,exp1); 
-                      print(","); 
-                      writeExp(indent,exp2);
-                      print(")"))
-
-               | writeExp(indent,infixexp(opstr,exp1,exp2)) = 
-                     (print("apply(id('"^opstr^"'),"); 
-                      writeExp(indent,tuplecon([exp1,exp2]));
-                      print(")"))
-
-               | writeExp(indent,expsequence(L)) = 
-                     (println(indent^"expsequence(["); 
-                      printList(writeExp,indent^"   ",L); 
-                      println(indent^"])"))
-
-               | writeExp(indent,letdec(dec,L)) = 
-                     (println(indent^"letdec("); 
-                      writeDec(indent^"   ",dec); 
-                      println(",\n"^indent^"   ["); 
-                      printList(writeExp,indent^"    ",L); 
-                      println("\n"^indent^"   ])"))
-
-               | writeExp(indent,raisexp(exp)) = 
-                     (print("apply(id('raise'),"); 
-                      writeExp(indent,exp); 
-                      print(")"))
-
-               | writeExp(indent,handlexp(exp,L)) = 
-                     (println(indent^"handlexp("); 
-                      writeExp(indent^"   ",exp); 
-                      println("\n"^indent^", ["); 
-                      printList(writeMatch,indent^"   ",L); 
-                      println(indent^"])"))
-
-               | writeExp(indent,ifthen(exp1,exp2,exp3)) = 
-                     (println(indent^"ifthen("); 
-                      writeExp(indent^"   ",exp1); 
-                      println("\n"^indent^","); 
-                      writeExp(indent^"   ",exp2);
-                      println("\n"^indent^","); 
-                      writeExp(indent^"   ",exp3);
-                      println("\n"^indent^")"))
- 
-               | writeExp(indent,whiledo(exp1,exp2)) = 
-                     (println(indent^"whiledo("); 
-                      writeExp(indent^"   ",exp1); 
-                      println("\n"^indent^","); 
-                      writeExp(indent^"   ",exp2);
-                      println("\n"^indent^")"))
-               
-               | writeExp(indent,func(i,L)) = 
-                     (println(indent^"func('anon@"^Int.toString(i)^"',["); 
-                      printList(writeMatch,indent^"   ",L); 
-                      print("\n"^indent^"])"))
-
-             and writeMatch(indent,match(pat,exp)) = 
-                     (print(indent^"match(");
-                      writePat(indent,pat);
-                      print(indent^",");
-                      writeExp(indent,exp);
-                      print(indent^")"))
-
-             and writePat(indent,intpat(i)) = print("intpat("^i^")")
-
-               | writePat(indent,boolpat(b)) = print("boolpat("^b^")")
-
-               | writePat(indent,chpat(c)) = print("chpat('"^c^"')")
-              
-               | writePat(indent,strpat(s)) = print("strpat('"^s^"')")
-
-               | writePat(indent,idpat(name)) = print("idpat('"^name^"')")
-           
-               | writePat(indent,wildcardpat) = print("wildcardpat")
-    
-               | writePat(indent,infixpat(opstr,pat1,pat2)) = 
-                     (print("infixpat('"^opstr^"',"); 
-                      writePat(indent,pat1); 
-                      print(","); 
-                      writePat(indent,pat2);
-                      print(")"))
-
-               | writePat(indent,listpat(L)) = 
-                     (print("listpat([");
-                      printList(writePat,indent,L);
-                      print("])"))
-
-               | writePat(indent,tuplepat(L)) = 
-                     (print("tuplepat([");
-                      printList(writePat,indent,L);
-                      print("])"))
-
-               | writePat(indent,aspat(name,pat)) = 
-                     (print("aspat('"^name^"',");
-                      writePat(indent,pat);
-                      print(")"))
-
-            and writeDec(indent,bindval(pat,exp)) = 
-                     (print(indent^"bindval(");
-                      writePat(indent,pat);
-                      print(",");
-                      writeExp(indent,exp);
-                      print(")"))
-
-              | writeDec(indent,bindvalrec(pat,exp)) = 
-                     (print(indent^"bindvalrec(");
-                      writePat(indent,pat);
-                      print(",");
-                      writeExp(indent,exp);
-                      print(indent^")"))
-
-              | writeDec(indent,funmatch(name,L)) = 
-                     (println(indent^"funmatch('"^name^"',[");
-                      printList(writeMatch,indent^"   ",L);
-                      println(indent^"])"))
-
-              | writeDec(indent,funmatches(L)) = 
-                     (println(indent^"funmatches([");
-                      printList(writeDec,indent,List.map (fn (x,y) => funmatch(x,y)) L);
-                      println(indent^"])"))
-         in
-           writeExp("",ast);
-           println(".")
-         end
      
      (* Here is where it all begins. The file is parsed to produce an abstract syntax tree. Then the output file a.casm is opened for writing. Constants
         and globals are defined. The ast is examined to find the cell variables and the locals. No free variables should exists in the main expression as 
@@ -1157,9 +1208,8 @@ open MLAS;
                 applied repeatedly in one expression. *)
              val globalBindings = [("println","print"),("print","fprint"),("cprint", "fprint"),("input","input"),("Int.fromString","int"),
                                    ("length","len"),("type","type"),("Exception","Exception"),("explode","funlist"),("implode","concat")]
-             val (newbindings,freeVars,cells) = localBindings(ast,[],globalBindings,0)
+             val (newbindings,freeVars,cellVars) = localBindings(ast,[],globalBindings,0)
              val bindingVars = removeDups (List.map (fn x => #2(x)) newbindings)
-             val cellVars = List.map (fn x => boundTo(x,newbindings@globalBindings)) cells                                              
              val locals = listdiff bindingVars cellVars
              val globals = removeDups (List.map (fn (x,y) => y) globalBindings)
 

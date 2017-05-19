@@ -1,0 +1,30 @@
+*************** Source File ****************
+
+true = 3
+******************* AST ********************
+apply(id('='),tuplecon([bool('true'),int('3')])).
+************* Type Checking ****************
+Typechecking is commencing...
+Here is the AST
+apply(id(=),tuplecon([bool(true),int(3)]))
+
+
+Failed to find a with type int in environment : [ (a,bool)]
+Error: Type error in function application.
+The function type is
+
+'a * 'a -> bool
+
+and the argument type is
+
+bool * int
+
+in function application:
+
+= (true,3)
+
+
+Error: Typechecking failed due to type error. Message was : 
+type incompatibility in function application
+
+********* Target Program Execution *********

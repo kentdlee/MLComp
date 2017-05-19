@@ -1,0 +1,32 @@
+*************** Source File ****************
+
+let fun factorial 0 = 1
+      | factorial n = n * (factorial (n-1))
+in
+  println (factorial 5)
+end
+******************* AST ********************
+letdec(
+   funmatches([
+   funmatch('factorial',[
+      match(intpat(0)      ,int('1')      )      ,      match(idpat('n')      ,apply(id('*'),tuplecon([id('n')      ,apply(id('factorial'),apply(id('-'),tuplecon([id('n')      ,int('1')])))]))      )   ])
+   ])
+,
+   [
+apply(id('println'),apply(id('factorial'),int('5')))
+   ])
+.
+************* Type Checking ****************
+Typechecking is commencing...
+Here is the AST
+letdec(funmatches([funmatch(factorial,[match(intpat(0),int(1)),match(idpat(n),apply(id(*),tuplecon([id(n),apply(id(factorial),apply(id(-),tuplecon([id(n),int(1)])))])))])]),[apply(id(println),apply(id(factorial),int(5)))])
+
+
+val factorial = fn : int -> int
+
+
+val it : unit
+
+The program passed the typechecker.
+********* Target Program Execution *********
+120

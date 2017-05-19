@@ -1,0 +1,30 @@
+*************** Source File ****************
+
+let fun f(x) = 1
+in 
+  1 + f(2)
+end
+******************* AST ********************
+letdec(
+   funmatches([
+   funmatch('f',[
+      match(idpat('x')      ,int('1')      )   ])
+   ])
+,
+   [
+apply(id('+'),tuplecon([int('1')    ,apply(id('f'),int('2'))]))
+   ])
+.
+************* Type Checking ****************
+Typechecking is commencing...
+Here is the AST
+letdec(funmatches([funmatch(f,[match(idpat(x),int(1))])]),[apply(id(+),tuplecon([int(1),apply(id(f),int(2))]))])
+
+
+val f = fn : 'a -> int
+
+
+val it : int
+
+The program passed the typechecker.
+********* Target Program Execution *********

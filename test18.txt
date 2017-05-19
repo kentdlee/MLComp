@@ -1,0 +1,45 @@
+*************** Source File ****************
+
+let fun f 0 y = y
+      | f x y = g x (x*y)
+    and g x y = f (x-1) y
+in
+  println (f 10 1)
+end
+
+******************* AST ********************
+letdec(
+   funmatches([
+   funmatch('f',[
+      match(idpat('v0')      ,      func('anon@3',[
+         match(idpat('v1')         ,apply(         func('anon@2',[
+            match(tuplepat([intpat(0)            ,idpat('y')])            ,id('y')            )            ,            match(tuplepat([idpat('x')            ,idpat('y')])            ,apply(apply(id('g'),id('x')),apply(id('*'),tuplecon([id('x')            ,id('y')])))            )
+         ]),tuplecon([id('v0')         ,id('v1')]))         )
+      ])      )   ])
+   ,   funmatch('g',[
+      match(idpat('v4')      ,      func('anon@7',[
+         match(idpat('v5')         ,apply(         func('anon@6',[
+            match(tuplepat([idpat('x')            ,idpat('y')])            ,apply(apply(id('f'),apply(id('-'),tuplecon([id('x')            ,int('1')]))),id('y'))            )
+         ]),tuplecon([id('v4')         ,id('v5')]))         )
+      ])      )   ])
+   ])
+,
+   [
+apply(id('println'),apply(apply(id('f'),int('10')),int('1')))
+   ])
+.
+************* Type Checking ****************
+Typechecking is commencing...
+Here is the AST
+letdec(funmatches([funmatch(f,[match(idpat(v0),func(anon@3,[match(idpat(v1),apply(func(anon@2,[match(tuplepat([intpat(0),idpat(y)]),id(y)),match(tuplepat([idpat(x),idpat(y)]),apply(apply(id(g),id(x)),apply(id(*),tuplecon([id(x),id(y)]))))]),tuplecon([id(v0),id(v1)])))]))]),funmatch(g,[match(idpat(v4),func(anon@7,[match(idpat(v5),apply(func(anon@6,[match(tuplepat([idpat(x),idpat(y)]),apply(apply(id(f),apply(id(-),tuplecon([id(x),int(1)]))),id(y)))]),tuplecon([id(v4),id(v5)])))]))])]),[apply(id(println),apply(apply(id(f),int(10)),int(1)))])
+
+
+val g = fn : int -> int -> int
+val f = fn : int -> int -> int
+
+
+val it : unit
+
+The program passed the typechecker.
+********* Target Program Execution *********
+3628800

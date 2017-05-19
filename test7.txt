@@ -1,0 +1,58 @@
+*************** Source File ****************
+
+let fun append nil L = L
+      | append (h::t) L = h :: (append t L) 
+
+    fun appendOne x = (fn nil => (fn L => L)
+                        | h::t => (fn L => h :: (appendOne t L))) x
+in 
+  println(append [1,2,3] [4]);
+  println(appendOne [1,2,3] [4])
+end
+
+******************* AST ********************
+letdec(
+   funmatches([
+   funmatch('append',[
+      match(idpat('v0')      ,      func('anon@3',[
+         match(idpat('v1')         ,apply(         func('anon@2',[
+            match(tuplepat([idpat('nil')            ,idpat('L')])            ,id('L')            )            ,            match(tuplepat([infixpat('::',idpat('h'),idpat('t'))            ,idpat('L')])            ,apply(id('::'),tuplecon([id('h')            ,apply(apply(id('append'),id('t')),id('L'))]))            )
+         ]),tuplecon([id('v0')         ,id('v1')]))         )
+      ])      )   ])
+   ])
+,
+   [
+    letdec(
+       funmatches([
+       funmatch('appendOne',[
+          match(idpat('x')          ,apply(          func('anon@6',[
+             match(idpat('nil')             ,             func('anon@4',[
+                match(idpat('L')                ,id('L')                )
+             ])             )             ,             match(infixpat('::',idpat('h'),idpat('t'))             ,             func('anon@5',[
+                match(idpat('L')                ,apply(id('::'),tuplecon([id('h')                ,apply(apply(id('appendOne'),id('t')),id('L'))]))                )
+             ])             )
+          ]),id('x'))          )       ])
+       ])
+,
+       [
+apply(id('println'),apply(apply(id('append'),listcon([int('1')        ,int('2')        ,int('3')])),listcon([int('4')])))        ,apply(id('println'),apply(apply(id('appendOne'),listcon([int('1')        ,int('2')        ,int('3')])),listcon([int('4')])))
+       ])
+
+   ])
+.
+************* Type Checking ****************
+Typechecking is commencing...
+Here is the AST
+letdec(funmatches([funmatch(append,[match(idpat(v0),func(anon@3,[match(idpat(v1),apply(func(anon@2,[match(tuplepat([idpat(nil),idpat(L)]),id(L)),match(tuplepat([infixpat(::,idpat(h),idpat(t)),idpat(L)]),apply(id(::),tuplecon([id(h),apply(apply(id(append),id(t)),id(L))])))]),tuplecon([id(v0),id(v1)])))]))])]),[letdec(funmatches([funmatch(appendOne,[match(idpat(x),apply(func(anon@6,[match(idpat(nil),func(anon@4,[match(idpat(L),id(L))])),match(infixpat(::,idpat(h),idpat(t)),func(anon@5,[match(idpat(L),apply(id(::),tuplecon([id(h),apply(apply(id(appendOne),id(t)),id(L))])))]))]),id(x)))])]),[apply(id(println),apply(apply(id(append),listcon([int(1),int(2),int(3)])),listcon([int(4)]))),apply(id(println),apply(apply(id(appendOne),listcon([int(1),int(2),int(3)])),listcon([int(4)])))])])
+
+
+val append = fn : 'a list -> 'a list -> 'a list
+val appendOne = fn : 'a list -> 'a list -> 'a list
+
+
+val it : unit
+
+The program passed the typechecker.
+********* Target Program Execution *********
+[1, 2, 3, 4]
+[1, 2, 3, 4]

@@ -1,0 +1,52 @@
+*************** Source File ****************
+
+(* In this program the explode is called funlist in the CoCo virtual machine
+   while the implode is called concat in the virtual machine. Unlike SML, 
+   explode returns a list of strings and implode concatenates a list of strings
+   to build a string.
+*)
+
+let fun skipH nil = ()
+      | skipH ("H"::t) = skipH t
+      | skipH (h::t) = 
+        (println h;
+         skipH t)
+    val s = input("Please enter some text: ")
+in
+  skipH (explode s);
+  println (implode (explode s))
+end
+
+******************* AST ********************
+letdec(
+   funmatches([
+   funmatch('skipH',[
+      match(idpat('nil')      ,tuplecon([])      )      ,      match(infixpat('::',strpat('"H"'),idpat('t'))      ,apply(id('skipH'),id('t'))      )      ,      match(infixpat('::',idpat('h'),idpat('t'))      ,      expsequence([
+apply(id('println'),id('h'))         ,apply(id('skipH'),id('t'))      ])
+      )   ])
+   ])
+,
+   [
+    letdec(
+       bindval(idpat('s'),apply(id('input'),str('"Please enter some text: "'))),
+       [
+apply(id('skipH'),apply(id('explode'),id('s')))        ,apply(id('println'),apply(id('implode'),apply(id('explode'),id('s'))))
+       ])
+
+   ])
+.
+************* Type Checking ****************
+Typechecking is commencing...
+Here is the AST
+letdec(funmatches([funmatch(skipH,[match(idpat(nil),tuplecon([])),match(infixpat(::,strpat("H"),idpat(t)),apply(id(skipH),id(t))),match(infixpat(::,idpat(h),idpat(t)),expsequence([apply(id(println),id(h)),apply(id(skipH),id(t))]))])]),[letdec(bindval(idpat(s),apply(id(input),str("Please enter some text: "))),[apply(id(skipH),apply(id(explode),id(s))),apply(id(println),apply(id(implode),apply(id(explode),id(s))))])])
+
+
+val skipH = fn : str list -> unit
+val s : str
+
+
+val it : unit
+
+The program passed the typechecker.
+********* Target Program Execution *********
+Please enter some text: 

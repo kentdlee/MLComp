@@ -1,0 +1,26 @@
+*************** Source File ****************
+
+let val x = []
+in
+ (1::x,"a"::x)
+end
+******************* AST ********************
+letdec(
+   bindval(idpat('x'),id('nil')),
+   [
+tuplecon([apply(id('::'),tuplecon([int('1')    ,id('x')]))    ,apply(id('::'),tuplecon([str('"a"')    ,id('x')]))])
+   ])
+.
+************* Type Checking ****************
+Typechecking is commencing...
+Here is the AST
+letdec(bindval(idpat(x),id(nil)),[tuplecon([apply(id(::),tuplecon([int(1),id(x)])),apply(id(::),tuplecon([str("a"),id(x)]))])])
+
+
+val x : 'a list
+
+
+val it : int list * str list
+
+The program passed the typechecker.
+********* Target Program Execution *********

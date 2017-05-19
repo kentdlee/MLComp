@@ -1,0 +1,24 @@
+*************** Source File ****************
+
+let val [(x,y,z)] = [("hello",1,true)] in println x end
+******************* AST ********************
+letdec(
+   bindval(listpat([tuplepat([idpat('x')   ,idpat('y')   ,idpat('z')])]),listcon([tuplecon([str('"hello"')   ,int('1')   ,bool('true')])])),
+   [
+apply(id('println'),id('x'))
+   ])
+.
+************* Type Checking ****************
+Typechecking is commencing...
+Here is the AST
+letdec(bindval(listpat([tuplepat([idpat(x),idpat(y),idpat(z)])]),listcon([tuplecon([str("hello"),int(1),bool(true)])])),[apply(id(println),id(x))])
+
+
+val [(x,y,z)] : (str * int * bool) list
+
+
+val it : unit
+
+The program passed the typechecker.
+********* Target Program Execution *********
+hello

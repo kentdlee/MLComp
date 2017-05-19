@@ -1,0 +1,49 @@
+*************** Source File ****************
+
+(* This is an invalid program and should not 
+   pass the type checker. However, it will 
+   compile and run even with the type error
+   on the CoCo Virtual Machine. In general,
+   the result is undefined. 
+*)
+
+let val x = ref 0
+in
+  x := x + 1;
+  println (x)
+end
+
+******************* AST ********************
+letdec(
+   bindval(idpat('x'),apply(id('ref'),int('0'))),
+   [
+apply(id(':='),tuplecon([id('x')    ,apply(id('+'),tuplecon([id('x')    ,int('1')]))]))    ,apply(id('println'),id('x'))
+   ])
+.
+************* Type Checking ****************
+Typechecking is commencing...
+Here is the AST
+letdec(bindval(idpat(x),apply(id(ref),int(0))),[apply(id(:=),tuplecon([id(x),apply(id(+),tuplecon([id(x),int(1)]))])),apply(id(println),id(x))])
+
+
+val x : int ref
+Type Error: Type int ref is not an instance of int
+Error: Type error in function application.
+The function type is
+
+int * int -> int
+
+and the argument type is
+
+int ref * int
+
+in function application:
+
++ (x,1)
+
+
+Error: Typechecking failed due to type error. Message was : 
+type incompatibility in function application
+
+********* Target Program Execution *********
+1

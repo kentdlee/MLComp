@@ -1,0 +1,43 @@
+*************** Source File ****************
+
+let val x = Int.fromString(input("Please enter an integer: "))
+    val y = Int.fromString(input("Please enter an integer: "))
+in
+  print "The maximum is ";
+  println (if x > y then x else y) 
+end
+
+******************* AST ********************
+letdec(
+   bindval(idpat('x'),apply(id('Int.fromString'),apply(id('input'),str('"Please enter an integer: "')))),
+   [
+    letdec(
+       bindval(idpat('y'),apply(id('Int.fromString'),apply(id('input'),str('"Please enter an integer: "')))),
+       [
+apply(id('print'),str('"The maximum is "'))        ,apply(id('println'),        ifthen(
+apply(id('>'),tuplecon([id('x')           ,id('y')]))
+        ,
+id('x')
+        ,
+id('y')
+        )
+)
+       ])
+
+   ])
+.
+************* Type Checking ****************
+Typechecking is commencing...
+Here is the AST
+letdec(bindval(idpat(x),apply(id(Int.fromString),apply(id(input),str("Please enter an integer: ")))),[letdec(bindval(idpat(y),apply(id(Int.fromString),apply(id(input),str("Please enter an integer: ")))),[apply(id(print),str("The maximum is ")),apply(id(println),ifthen(apply(id(>),tuplecon([id(x),id(y)])),id(x),id(y)))])])
+
+
+val x : int
+val y : int
+
+
+val it : unit
+
+The program passed the typechecker.
+********* Target Program Execution *********
+Please enter an integer: 

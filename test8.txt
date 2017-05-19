@@ -1,0 +1,29 @@
+*************** Source File ****************
+
+let val x = ref 0
+in
+  x := !x + 1;
+  println (!x)
+end
+
+******************* AST ********************
+letdec(
+   bindval(idpat('x'),apply(id('ref'),int('0'))),
+   [
+apply(id(':='),tuplecon([id('x')    ,apply(id('+'),tuplecon([apply(id('!'),id('x'))    ,int('1')]))]))    ,apply(id('println'),apply(id('!'),id('x')))
+   ])
+.
+************* Type Checking ****************
+Typechecking is commencing...
+Here is the AST
+letdec(bindval(idpat(x),apply(id(ref),int(0))),[apply(id(:=),tuplecon([id(x),apply(id(+),tuplecon([apply(id(!),id(x)),int(1)]))])),apply(id(println),apply(id(!),id(x)))])
+
+
+val x : int ref
+
+
+val it : unit
+
+The program passed the typechecker.
+********* Target Program Execution *********
+1

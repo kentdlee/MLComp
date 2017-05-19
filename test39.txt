@@ -1,0 +1,56 @@
+*************** Source File ****************
+
+
+let fun zip [] [] = []
+      | zip [] L = raise (Exception "List length mismatch")
+      | zip L [] = raise (Exception "List length mismatch") 
+      | zip (h::t) (g::u) = (h,g)::(zip t u)
+ 
+    val x = [1,2,3]
+    val y = [4,5,6]
+in
+  println(zip x y)
+end
+  
+
+******************* AST ********************
+letdec(
+   funmatches([
+   funmatch('zip',[
+      match(idpat('v0')      ,      func('anon@3',[
+         match(idpat('v1')         ,apply(         func('anon@2',[
+            match(tuplepat([idpat('nil')            ,idpat('nil')])            ,id('nil')            )            ,            match(tuplepat([idpat('nil')            ,idpat('L')])            ,apply(id('raise'),apply(id('Exception'),str('"List length mismatch"')))            )            ,            match(tuplepat([idpat('L')            ,idpat('nil')])            ,apply(id('raise'),apply(id('Exception'),str('"List length mismatch"')))            )            ,            match(tuplepat([infixpat('::',idpat('h'),idpat('t'))            ,infixpat('::',idpat('g'),idpat('u'))])            ,apply(id('::'),tuplecon([tuplecon([id('h')            ,id('g')])            ,apply(apply(id('zip'),id('t')),id('u'))]))            )
+         ]),tuplecon([id('v0')         ,id('v1')]))         )
+      ])      )   ])
+   ])
+,
+   [
+    letdec(
+       bindval(idpat('x'),listcon([int('1')       ,int('2')       ,int('3')])),
+       [
+        letdec(
+           bindval(idpat('y'),listcon([int('4')           ,int('5')           ,int('6')])),
+           [
+apply(id('println'),apply(apply(id('zip'),id('x')),id('y')))
+           ])
+
+       ])
+
+   ])
+.
+************* Type Checking ****************
+Typechecking is commencing...
+Here is the AST
+letdec(funmatches([funmatch(zip,[match(idpat(v0),func(anon@3,[match(idpat(v1),apply(func(anon@2,[match(tuplepat([idpat(nil),idpat(nil)]),id(nil)),match(tuplepat([idpat(nil),idpat(L)]),apply(id(raise),apply(id(Exception),str("List length mismatch")))),match(tuplepat([idpat(L),idpat(nil)]),apply(id(raise),apply(id(Exception),str("List length mismatch")))),match(tuplepat([infixpat(::,idpat(h),idpat(t)),infixpat(::,idpat(g),idpat(u))]),apply(id(::),tuplecon([tuplecon([id(h),id(g)]),apply(apply(id(zip),id(t)),id(u))])))]),tuplecon([id(v0),id(v1)])))]))])]),[letdec(bindval(idpat(x),listcon([int(1),int(2),int(3)])),[letdec(bindval(idpat(y),listcon([int(4),int(5),int(6)])),[apply(id(println),apply(apply(id(zip),id(x)),id(y)))])])])
+
+
+val zip = fn : 'a list -> 'b list -> ('a * 'b) list
+val x : int list
+val y : int list
+
+
+val it : unit
+
+The program passed the typechecker.
+********* Target Program Execution *********
+[(1, 4), (2, 5), (3, 6)]

@@ -1,0 +1,34 @@
+*************** Source File ****************
+
+let val x = 4
+in
+  println
+    (case x of 
+      1 => "hello"
+    | 2 => "how"
+    | 3 => "are"
+    | 4 => "you")
+end
+******************* AST ********************
+letdec(
+   bindval(idpat('x'),int('4')),
+   [
+apply(id('println'),    caseof(id('x')
+    , [
+       match(intpat(1)       ,str('"hello"')       )       ,       match(intpat(2)       ,str('"how"')       )       ,       match(intpat(3)       ,str('"are"')       )       ,       match(intpat(4)       ,str('"you"')       )    ]))
+   ])
+.
+************* Type Checking ****************
+Typechecking is commencing...
+Here is the AST
+letdec(bindval(idpat(x),int(4)),[apply(id(println),caseof(id(x),[match(intpat(1),str("hello")),match(intpat(2),str("how")),match(intpat(3),str("are")),match(intpat(4),str("you"))]))])
+
+
+val x : int
+
+
+val it : unit
+
+The program passed the typechecker.
+********* Target Program Execution *********
+you

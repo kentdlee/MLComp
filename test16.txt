@@ -1,0 +1,46 @@
+*************** Source File ****************
+
+(* 
+	This program type checks correctly as it stands, but it should
+	not. This is an example of a program that demonstrates that the
+	implementation of type checking for MLComp is not sound. 
+
+	This program and why it should not type check correctly is 
+	discussed at
+
+	http://www.smlnj.org/doc/Conversion/types.html
+
+	where it explains why this should not pass the type checker
+	and how that is handled correctly in SML/NJ. 
+*)
+
+let val r = ref(fn x => x)
+in
+    r := (fn x => x+1);
+    !r true
+end
+
+******************* AST ********************
+letdec(
+   bindval(idpat('r'),apply(id('ref'),   func('anon@0',[
+      match(idpat('x')      ,id('x')      )
+   ]))),
+   [
+apply(id(':='),tuplecon([id('r')    ,    func('anon@1',[
+       match(idpat('x')       ,apply(id('+'),tuplecon([id('x')       ,int('1')]))       )
+    ])]))    ,apply(apply(id('!'),id('r')),bool('true'))
+   ])
+.
+************* Type Checking ****************
+Typechecking is commencing...
+Here is the AST
+letdec(bindval(idpat(r),apply(id(ref),func(anon@0,[match(idpat(x),id(x))]))),[apply(id(:=),tuplecon([id(r),func(anon@1,[match(idpat(x),apply(id(+),tuplecon([id(x),int(1)])))])])),apply(apply(id(!),id(r)),bool(true))])
+
+
+val r : ('a -> 'a) ref
+
+
+val it : bool
+
+The program passed the typechecker.
+********* Target Program Execution *********

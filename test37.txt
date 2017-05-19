@@ -1,0 +1,19 @@
+*************** Source File ****************
+
+[]
+******************* AST ********************
+id('nil').
+************* Type Checking ****************
+Typechecking is commencing...
+Here is the AST
+id(nil)
+
+
+
+
+val it : 'a list
+
+Warning: type vars not instantiated in result type initialized to dummy types!
+
+The program passed the typechecker.
+********* Target Program Execution *********

@@ -25,6 +25,12 @@
 
 *******************************************************************************************************/
 
+/* In the latest version of Prolog the print is replaced by write. The print predicate still exists, but
+   adds unwanted quotes into the generated output. Redefining print to call write instead fixes this issue.
+*/
+
+print(P) :- write(P).
+
 /******************************************************************************************************
 
    readAST
@@ -124,7 +130,7 @@ printExp(_, id(Name)) :- print(Name), !.
 
 printExp(Indent, listcon(L)) :- print('['), printExpList(Indent,L), print(']').
 
-printExp(Indent, tuple(L)) :- print('('), printExpList(Indent,L), print(')').
+printExp(Indent, tuplecon(L)) :- print('('), printExpList(Indent,L), print(')').
 
 printExp(Indent, apply(E1,apply(E2,E3))) :- 
              printExp(Indent, E1), print(' ('), printExp(Indent, apply(E2,E3)), print(')').
@@ -812,7 +818,7 @@ typecheckExp(_,bool(_),bool) :- !.
 
 typecheckExp(_,str(_),str) :- !.
 
-typecheckExp(Env,tuple(L),tuple(T)) :- typecheckTuple(Env,L,T), !.
+typecheckExp(Env,tuplecon(L),tuple(T)) :- typecheckTuple(Env,L,T), !.
 
 typecheckExp(_,Exp,_) :- 
         nl, nl, print('Typechecker Error: Unknown expression '), print(Exp),

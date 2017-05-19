@@ -1,0 +1,19 @@
+*************** Source File ****************
+
+println 5 + 4
+
+******************* AST ********************
+apply(id('println'),apply(id('+'),tuplecon([int('5'),int('4')]))).
+************* Type Checking ****************
+Typechecking is commencing...
+Here is the AST
+apply(id(println),apply(id(+),tuplecon([int(5),int(4)])))
+
+
+
+
+val it : unit
+
+The program passed the typechecker.
+********* Target Program Execution *********
+9

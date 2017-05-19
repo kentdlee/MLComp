@@ -1,0 +1,36 @@
+*************** Source File ****************
+
+let f(x) = x
+in
+  println (f 5);
+  println (f "hi");
+  println (f true)
+end
+ line 1, Error: syntax error: inserting  Fun
+******************* AST ********************
+letdec(
+   funmatches([
+   funmatch('f',[
+      match(idpat('x')      ,id('x')      )   ])
+   ])
+,
+   [
+apply(id('println'),apply(id('f'),int('5')))    ,apply(id('println'),apply(id('f'),str('"hi"')))    ,apply(id('println'),apply(id('f'),bool('true')))
+   ])
+.
+************* Type Checking ****************
+Typechecking is commencing...
+Here is the AST
+letdec(funmatches([funmatch(f,[match(idpat(x),id(x))])]),[apply(id(println),apply(id(f),int(5))),apply(id(println),apply(id(f),str("hi"))),apply(id(println),apply(id(f),bool(true)))])
+
+
+val f = fn : 'a -> 'a
+
+
+val it : unit
+
+The program passed the typechecker.
+********* Target Program Execution *********
+5
+hi
+True

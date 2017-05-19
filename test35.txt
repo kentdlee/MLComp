@@ -1,0 +1,39 @@
+*************** Source File ****************
+
+let fun map f [] = []
+      | map f (h::t) = (f h) :: (map f t)
+
+in 
+  println(map (fn x => x + 1) [1,2,3,4])
+end
+******************* AST ********************
+letdec(
+   funmatches([
+   funmatch('map',[
+      match(idpat('v0')      ,      func('anon@3',[
+         match(idpat('v1')         ,apply(         func('anon@2',[
+            match(tuplepat([idpat('f')            ,idpat('nil')])            ,id('nil')            )            ,            match(tuplepat([idpat('f')            ,infixpat('::',idpat('h'),idpat('t'))])            ,apply(id('::'),tuplecon([apply(id('f'),id('h'))            ,apply(apply(id('map'),id('f')),id('t'))]))            )
+         ]),tuplecon([id('v0')         ,id('v1')]))         )
+      ])      )   ])
+   ])
+,
+   [
+apply(id('println'),apply(apply(id('map'),    func('anon@4',[
+       match(idpat('x')       ,apply(id('+'),tuplecon([id('x')       ,int('1')]))       )
+    ])),listcon([int('1')    ,int('2')    ,int('3')    ,int('4')])))
+   ])
+.
+************* Type Checking ****************
+Typechecking is commencing...
+Here is the AST
+letdec(funmatches([funmatch(map,[match(idpat(v0),func(anon@3,[match(idpat(v1),apply(func(anon@2,[match(tuplepat([idpat(f),idpat(nil)]),id(nil)),match(tuplepat([idpat(f),infixpat(::,idpat(h),idpat(t))]),apply(id(::),tuplecon([apply(id(f),id(h)),apply(apply(id(map),id(f)),id(t))])))]),tuplecon([id(v0),id(v1)])))]))])]),[apply(id(println),apply(apply(id(map),func(anon@4,[match(idpat(x),apply(id(+),tuplecon([id(x),int(1)])))])),listcon([int(1),int(2),int(3),int(4)])))])
+
+
+val map = fn : ('a -> 'b) -> 'a list -> 'b list
+
+
+val it : unit
+
+The program passed the typechecker.
+********* Target Program Execution *********
+[2, 3, 4, 5]

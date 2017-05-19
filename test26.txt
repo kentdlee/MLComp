@@ -1,0 +1,44 @@
+*************** Source File ****************
+
+ let fun goofy(L as h::t) = if h=1 then L else goofy t
+       | goofy(x) = x
+
+ in
+   println
+   (goofy [5, 6, 1, 2, 3])
+ end
+
+
+
+******************* AST ********************
+letdec(
+   funmatches([
+   funmatch('goofy',[
+      match(aspat('L',infixpat('::',idpat('h'),idpat('t')))      ,      ifthen(
+apply(id('='),tuplecon([id('h')         ,int('1')]))
+      ,
+id('L')
+      ,
+apply(id('goofy'),id('t'))
+      )
+      )      ,      match(idpat('x')      ,id('x')      )   ])
+   ])
+,
+   [
+apply(id('println'),apply(id('goofy'),listcon([int('5')    ,int('6')    ,int('1')    ,int('2')    ,int('3')])))
+   ])
+.
+************* Type Checking ****************
+Typechecking is commencing...
+Here is the AST
+letdec(funmatches([funmatch(goofy,[match(aspat(L,infixpat(::,idpat(h),idpat(t))),ifthen(apply(id(=),tuplecon([id(h),int(1)])),id(L),apply(id(goofy),id(t)))),match(idpat(x),id(x))])]),[apply(id(println),apply(id(goofy),listcon([int(5),int(6),int(1),int(2),int(3)])))])
+
+
+val goofy = fn : int list -> int list
+
+
+val it : unit
+
+The program passed the typechecker.
+********* Target Program Execution *********
+[1, 2, 3]

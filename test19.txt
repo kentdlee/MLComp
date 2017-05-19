@@ -1,0 +1,30 @@
+*************** Source File ****************
+
+let val rec f = (fn 0 => 1
+                  | x => x * (f (x-1)))
+in
+   println(f 5)
+end
+******************* AST ********************
+letdec(
+   bindvalrec(idpat('f'),   func('anon@0',[
+      match(intpat(0)      ,int('1')      )      ,      match(idpat('x')      ,apply(id('*'),tuplecon([id('x')      ,apply(id('f'),apply(id('-'),tuplecon([id('x')      ,int('1')])))]))      )
+   ])   ),
+   [
+apply(id('println'),apply(id('f'),int('5')))
+   ])
+.
+************* Type Checking ****************
+Typechecking is commencing...
+Here is the AST
+letdec(bindvalrec(idpat(f),func(anon@0,[match(intpat(0),int(1)),match(idpat(x),apply(id(*),tuplecon([id(x),apply(id(f),apply(id(-),tuplecon([id(x),int(1)])))])))])),[apply(id(println),apply(id(f),int(5)))])
+
+
+val f = fn : int -> int
+
+
+val it : unit
+
+The program passed the typechecker.
+********* Target Program Execution *********
+120

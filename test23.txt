@@ -1,0 +1,29 @@
+*************** Source File ****************
+
+let val L as h::t = [1,2,3,4]
+in
+	print(L);
+	print(h);
+	print(t)
+end
+******************* AST ********************
+letdec(
+   bindval(aspat('L',infixpat('::',idpat('h'),idpat('t'))),listcon([int('1')   ,int('2')   ,int('3')   ,int('4')])),
+   [
+apply(id('print'),id('L'))    ,apply(id('print'),id('h'))    ,apply(id('print'),id('t'))
+   ])
+.
+************* Type Checking ****************
+Typechecking is commencing...
+Here is the AST
+letdec(bindval(aspat(L,infixpat(::,idpat(h),idpat(t))),listcon([int(1),int(2),int(3),int(4)])),[apply(id(print),id(L)),apply(id(print),id(h)),apply(id(print),id(t))])
+
+
+val L as h::t : int list
+
+
+val it : unit
+
+The program passed the typechecker.
+********* Target Program Execution *********
+[1, 2, 3, 4]1[2, 3, 4]

@@ -1,0 +1,47 @@
+*************** Source File ****************
+
+let val x = 6 
+     fun f() = x
+in
+  let val x = 5
+  in
+    println(f())
+  end
+end
+******************* AST ********************
+letdec(
+   bindval(idpat('x'),int('6')),
+   [
+    letdec(
+       funmatches([
+       funmatch('f',[
+          match(tuplepat([])          ,id('x')          )       ])
+       ])
+,
+       [
+        letdec(
+           bindval(idpat('x'),int('5')),
+           [
+apply(id('println'),apply(id('f'),tuplecon([])))
+           ])
+
+       ])
+
+   ])
+.
+************* Type Checking ****************
+Typechecking is commencing...
+Here is the AST
+letdec(bindval(idpat(x),int(6)),[letdec(funmatches([funmatch(f,[match(tuplepat([]),id(x))])]),[letdec(bindval(idpat(x),int(5)),[apply(id(println),apply(id(f),tuplecon([])))])])])
+
+
+val x : int
+val f = fn : unit -> int
+val x : int
+
+
+val it : unit
+
+The program passed the typechecker.
+********* Target Program Execution *********
+6

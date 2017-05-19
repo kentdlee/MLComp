@@ -1,0 +1,44 @@
+*************** Source File ****************
+
+let fun bar x = 
+    let fun foo y = x
+    in
+        foo
+    end
+in
+  bar
+end
+******************* AST ********************
+letdec(
+   funmatches([
+   funmatch('bar',[
+      match(idpat('x')      ,      letdec(
+         funmatches([
+         funmatch('foo',[
+            match(idpat('y')            ,id('x')            )         ])
+         ])
+,
+         [
+id('foo')
+         ])
+      )   ])
+   ])
+,
+   [
+id('bar')
+   ])
+.
+************* Type Checking ****************
+Typechecking is commencing...
+Here is the AST
+letdec(funmatches([funmatch(bar,[match(idpat(x),letdec(funmatches([funmatch(foo,[match(idpat(y),id(x))])]),[id(foo)]))])]),[id(bar)])
+
+
+val foo = fn : 'a -> 'b
+val bar = fn : 'b -> 'a -> 'b
+
+
+val it : 'b -> 'a -> 'b
+
+The program passed the typechecker.
+********* Target Program Execution *********

@@ -1,0 +1,35 @@
+*************** Source File ****************
+
+let val x = Int.fromString(input("Please enter an integer: "))
+in
+	print "The value of 100 div ";
+	print x;
+	print " is ";
+	println (100 div x)
+end handle ex  => println ex
+   | redundant => ()
+******************* AST ********************
+handlexp(
+   letdec(
+      bindval(idpat('x'),apply(id('Int.fromString'),apply(id('input'),str('"Please enter an integer: "')))),
+      [
+apply(id('print'),str('"The value of 100 div "'))       ,apply(id('print'),id('x'))       ,apply(id('print'),str('" is "'))       ,apply(id('println'),apply(id('div'),tuplecon([int('100')       ,id('x')])))
+      ])
+
+, [
+   match(idpat('ex')   ,apply(id('println'),id('ex'))   )   ,   match(idpat('redundant')   ,tuplecon([])   )])
+.
+************* Type Checking ****************
+Typechecking is commencing...
+Here is the AST
+handlexp(letdec(bindval(idpat(x),apply(id(Int.fromString),apply(id(input),str("Please enter an integer: ")))),[apply(id(print),str("The value of 100 div ")),apply(id(print),id(x)),apply(id(print),str(" is ")),apply(id(println),apply(id(div),tuplecon([int(100),id(x)])))]),[match(idpat(ex),apply(id(println),id(ex))),match(idpat(redundant),tuplecon([]))])
+
+
+val x : int
+
+
+val it : unit
+
+The program passed the typechecker.
+********* Target Program Execution *********
+Please enter an integer: invalid literal for int() with base 10: ''

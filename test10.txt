@@ -1,0 +1,35 @@
+*************** Source File ****************
+
+let val x = 5
+    val y = 6
+in
+  println (x + y) 
+end
+
+******************* AST ********************
+letdec(
+   bindval(idpat('x'),int('5')),
+   [
+    letdec(
+       bindval(idpat('y'),int('6')),
+       [
+apply(id('println'),apply(id('+'),tuplecon([id('x')        ,id('y')])))
+       ])
+
+   ])
+.
+************* Type Checking ****************
+Typechecking is commencing...
+Here is the AST
+letdec(bindval(idpat(x),int(5)),[letdec(bindval(idpat(y),int(6)),[apply(id(println),apply(id(+),tuplecon([id(x),id(y)])))])])
+
+
+val x : int
+val y : int
+
+
+val it : unit
+
+The program passed the typechecker.
+********* Target Program Execution *********
+11

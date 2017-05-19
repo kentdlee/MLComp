@@ -1,0 +1,27 @@
+*************** Source File ****************
+
+let val x = 5
+in
+  println x
+end
+******************* AST ********************
+letdec(
+   bindval(idpat('x'),int('5')),
+   [
+apply(id('println'),id('x'))
+   ])
+.
+************* Type Checking ****************
+Typechecking is commencing...
+Here is the AST
+letdec(bindval(idpat(x),int(5)),[apply(id(println),id(x))])
+
+
+val x : int
+
+
+val it : unit
+
+The program passed the typechecker.
+********* Target Program Execution *********
+5

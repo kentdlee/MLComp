@@ -1,0 +1,50 @@
+*************** Source File ****************
+
+let fun f(true,x) = (println(x); g(x-1))
+      | f(false,x) = g(x-1)
+
+    and g 0 = ()
+      | g x = f(true,x)
+
+in
+  g(10)
+end
+******************* AST ********************
+letdec(
+   funmatches([
+   funmatch('f',[
+      match(tuplepat([boolpat(true)      ,idpat('x')])      ,      expsequence([
+apply(id('println'),id('x'))         ,apply(id('g'),apply(id('-'),tuplecon([id('x')         ,int('1')])))      ])
+      )      ,      match(tuplepat([boolpat(false)      ,idpat('x')])      ,apply(id('g'),apply(id('-'),tuplecon([id('x')      ,int('1')])))      )   ])
+   ,   funmatch('g',[
+      match(intpat(0)      ,tuplecon([])      )      ,      match(idpat('x')      ,apply(id('f'),tuplecon([bool('true')      ,id('x')]))      )   ])
+   ])
+,
+   [
+apply(id('g'),int('10'))
+   ])
+.
+************* Type Checking ****************
+Typechecking is commencing...
+Here is the AST
+letdec(funmatches([funmatch(f,[match(tuplepat([boolpat(true),idpat(x)]),expsequence([apply(id(println),id(x)),apply(id(g),apply(id(-),tuplecon([id(x),int(1)])))])),match(tuplepat([boolpat(false),idpat(x)]),apply(id(g),apply(id(-),tuplecon([id(x),int(1)]))))]),funmatch(g,[match(intpat(0),tuplecon([])),match(idpat(x),apply(id(f),tuplecon([bool(true),id(x)])))])]),[apply(id(g),int(10))])
+
+
+val g = fn : int -> unit
+val f = fn : bool * int -> unit
+
+
+val it : unit
+
+The program passed the typechecker.
+********* Target Program Execution *********
+10
+9
+8
+7
+6
+5
+4
+3
+2
+1

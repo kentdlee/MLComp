@@ -1,0 +1,37 @@
+*************** Source File ****************
+
+let fun f(0,y) = y
+      | f(x,y) = g(x,x*y)
+    and g(x,y) = f(x-1,y)
+in
+  println (f(10,5)) 
+end
+
+******************* AST ********************
+letdec(
+   funmatches([
+   funmatch('f',[
+      match(tuplepat([intpat(0)      ,idpat('y')])      ,id('y')      )      ,      match(tuplepat([idpat('x')      ,idpat('y')])      ,apply(id('g'),tuplecon([id('x')      ,apply(id('*'),tuplecon([id('x')      ,id('y')]))]))      )   ])
+   ,   funmatch('g',[
+      match(tuplepat([idpat('x')      ,idpat('y')])      ,apply(id('f'),tuplecon([apply(id('-'),tuplecon([id('x')      ,int('1')]))      ,id('y')]))      )   ])
+   ])
+,
+   [
+apply(id('println'),apply(id('f'),tuplecon([int('10')    ,int('5')])))
+   ])
+.
+************* Type Checking ****************
+Typechecking is commencing...
+Here is the AST
+letdec(funmatches([funmatch(f,[match(tuplepat([intpat(0),idpat(y)]),id(y)),match(tuplepat([idpat(x),idpat(y)]),apply(id(g),tuplecon([id(x),apply(id(*),tuplecon([id(x),id(y)]))])))]),funmatch(g,[match(tuplepat([idpat(x),idpat(y)]),apply(id(f),tuplecon([apply(id(-),tuplecon([id(x),int(1)])),id(y)])))])]),[apply(id(println),apply(id(f),tuplecon([int(10),int(5)])))])
+
+
+val g = fn : int * int -> int
+val f = fn : int * int -> int
+
+
+val it : unit
+
+The program passed the typechecker.
+********* Target Program Execution *********
+18144000

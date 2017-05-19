@@ -167,6 +167,7 @@ Exp : Con                                                  (Con)
     | Exp NotEqual FuncExp                                 (infixexp("<>",Exp,FuncExp))
     | Exp Append FuncExp                                   (infixexp("@",Exp,FuncExp))
     | Exp ListCons FuncExp                                 (infixexp("::",Exp,FuncExp))
+    | LParen RParen                                        (tuplecon([]))
     | LParen Exp RParen                                    (Exp)
     | LParen Expressions RParen                            (tuplecon(Expressions))
     | LParen ExpSequence RParen                            (expsequence(ExpSequence))
@@ -174,12 +175,24 @@ Exp : Con                                                  (Con)
     | LBracket RBracket                                    (id("nil"))
     | Let DecSeq In ExpSequence End                        
                 (List.hd (List.foldr (fn (x,y) => [letdec(x,y)]) ExpSequence DecSeq))
-    | Raise Exp                                            (raisexp(Exp))
+    | Raise FuncExp                                        (raisexp(FuncExp))
     | Exp Handle MatchExp                                  (handlexp(Exp,MatchExp))
     | If Exp Then Exp Else FuncExp                         (ifthen(Exp1,Exp2,FuncExp))
     | While Exp Do FuncExp                                 (whiledo(Exp,FuncExp))
 
     | Fn MatchExp                                          (func(nextIdNum(),MatchExp))
+
+(* The FuncExp is defined because it forces a reduction in the parser to be performed
+   instead of a shift. Because function application (i.e. a function call is defined
+   as two expressions juxtaposed as in (Exp1 Exp2) there is some ambiguity if we write
+   (Exp1 Exp2 Exp3). We want function Exp1 passing Exp2 into it and the result being 
+   applied to Exp3 as in ((Exp1 Exp2) Exp3). To get that left associativity if we 
+   define function application as (FuncExp Exp) then when three are written next to 
+   each other we must first reduce Exp1 to FuncExp and then the Combination of 
+   FuncExp Exp1 reduces to Exp which again reduces to FuncExp to be able to apply
+   FuncExp Exp3. This guarantees left-associativity of function application. Likewise,
+   FuncExp appears in the other expression grammar rules to insure the correct 
+   associativity of operations in those cases. *)
 
 FuncExp : Exp                                              (Exp)
 
@@ -200,6 +213,7 @@ Pat : Int                                                  (intpat(Int))
     | Underscore                                           (wildcardpat)
     | Id                                                   (idpat(Id))
     | Pat ListCons Pat                                     (infixpat("::",Pat1,Pat2))
+    | LParen RParen                                        (tuplepat([]))
     | LParen Pat RParen                                    (Pat)
     | LParen Patterns RParen                               (tuplepat(Patterns))
     | LBracket Patterns RBracket                           (listpat(Patterns))

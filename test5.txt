@@ -1,0 +1,52 @@
+*************** Source File ****************
+
+(* there is a type error in this program that is not caught at run-time *)
+let val x = true
+    val y = false
+in
+  println (x orelse y div 0);
+  println (y andalso x * 5)
+end
+
+
+******************* AST ********************
+letdec(
+   bindval(idpat('x'),bool('true')),
+   [
+    letdec(
+       bindval(idpat('y'),bool('false')),
+       [
+apply(id('println'),apply(id('orelse'),tuplecon([id('x')        ,apply(id('div'),tuplecon([id('y')        ,int('0')]))])))        ,apply(id('println'),apply(id('andalso'),tuplecon([id('y')        ,apply(id('*'),tuplecon([id('x')        ,int('5')]))])))
+       ])
+
+   ])
+.
+************* Type Checking ****************
+Typechecking is commencing...
+Here is the AST
+letdec(bindval(idpat(x),bool(true)),[letdec(bindval(idpat(y),bool(false)),[apply(id(println),apply(id(orelse),tuplecon([id(x),apply(id(div),tuplecon([id(y),int(0)]))]))),apply(id(println),apply(id(andalso),tuplecon([id(y),apply(id(*),tuplecon([id(x),int(5)]))])))])])
+
+
+val x : bool
+val y : bool
+Type Error: Type bool is not an instance of int
+Error: Type error in function application.
+The function type is
+
+int * int -> int
+
+and the argument type is
+
+bool * int
+
+in function application:
+
+div (y,0)
+
+
+Error: Typechecking failed due to type error. Message was : 
+type incompatibility in function application
+
+********* Target Program Execution *********
+True
+False

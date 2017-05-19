@@ -1,0 +1,60 @@
+*************** Source File ****************
+
+(* This code checks to see that a non-ref binding cannot
+   be used incorrectly as a variable binding. This code will
+   run on the coco interpreter because free variables are 
+   implemented as cellvars and that is exactly how a ref
+   binding is implemented, too. However, this program
+   does not pass the typechecker. *)
+
+let val x = 0
+    fun f y = (x:=!x+1)
+in
+  f 0;
+  println x 
+end
+  
+
+******************* AST ********************
+letdec(
+   bindval(idpat('x'),int('0')),
+   [
+    letdec(
+       funmatches([
+       funmatch('f',[
+          match(idpat('y')          ,apply(id(':='),tuplecon([id('x')          ,apply(id('+'),tuplecon([apply(id('!'),id('x'))          ,int('1')]))]))          )       ])
+       ])
+,
+       [
+apply(id('f'),int('0'))        ,apply(id('println'),id('x'))
+       ])
+
+   ])
+.
+************* Type Checking ****************
+Typechecking is commencing...
+Here is the AST
+letdec(bindval(idpat(x),int(0)),[letdec(funmatches([funmatch(f,[match(idpat(y),apply(id(:=),tuplecon([id(x),apply(id(+),tuplecon([apply(id(!),id(x)),int(1)]))])))])]),[apply(id(f),int(0)),apply(id(println),id(x))])])
+
+
+val x : int
+Type Error: Type int is not an instance of 'a ref
+Error: Type error in function application.
+The function type is
+
+'a ref -> 'a
+
+and the argument type is
+
+int
+
+in function application:
+
+! x
+
+
+Error: Typechecking failed due to type error. Message was : 
+type incompatibility in function application
+
+********* Target Program Execution *********
+1
